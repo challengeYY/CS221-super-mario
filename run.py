@@ -1,6 +1,7 @@
 import gym
 import ppaquette_gym_super_mario
 from pynput import keyboard
+from time import sleep
 # import gym_pull
 # gym_pull.pull('github.com/ppaquette/gym-super-mario') 
 env = gym.make('ppaquette/SuperMarioBros-1-1-Tiles-v0')
@@ -38,6 +39,7 @@ with keyboard.Listener(
     while total_score < 32000:
         obs, reward, is_finished, info = env.step(action)
         env.render()
+        sleep(1.0/30)
         total_score = info["distance"]
         print total_score
     listener.join()
