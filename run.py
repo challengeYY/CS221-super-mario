@@ -1,5 +1,7 @@
 import gym
 import ppaquette_gym_super_mario
+# import gym_pull
+# gym_pull.pull('github.com/ppaquette/gym-super-mario') 
 env = gym.make('ppaquette/SuperMarioBros-1-1-v0')
 env.reset()
 total_score = 0
