@@ -35,6 +35,12 @@ class HumanController(Controller):
         else:
             return False
 
+    def handle(self, e):
+        self.listener.join()
+        print('encountering error, exiting ...')
+        traceback.print_exc()
+        exit(-1)
+
     def on_press(self, key):
         try:
            if key.char == 'a':
@@ -58,10 +64,4 @@ class HumanController(Controller):
             action[4] = 0
         elif key.char == 'k':
             action[5] = 0
-
-    def handle(self, e):
-        self.listener.join()
-        print('encountering error, exiting ...')
-        traceback.print_exc()
-        exit(-1)
 

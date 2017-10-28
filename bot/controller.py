@@ -2,6 +2,8 @@ from pynput import keyboard
 from abc import ABCMeta, abstractmethod
 import traceback
 
+
+# Controller interface to interact with emulator
 class Controller:
     __metaclass__ = ABCMeta
 
@@ -9,7 +11,7 @@ class Controller:
     @abstractmethod
     def initAction(self): pass
 
-    # Controller returns a action based on the feedback from simulator 
+    # Controller returns a action based on the feedback from emulator
     @abstractmethod
     def act(self, obs, reward, is_finished, info): pass
 
