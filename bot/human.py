@@ -8,19 +8,19 @@ class HumanAgent(Agent):
     def __init__(self, options):
         self.action = [0,0,0,0,0,0]
         self.state = None
-        with keyboard.Listener(
-            on_press=self.on_press,
-            on_release=self.on_release) as listener:
-                self.listener = listener
+        # with keyboard.Listener(
+            # on_press=self.on_press,
+            # on_release=self.on_release) as listener:
+                # self.listener = listener
 
     def initAction(self):
         print('init act ...')
         return self.action
 
     def act(self, obs, reward, is_finished, info):
-        self.state = (obs, reward, is_finished, info)
-        print('acting {}'.format(self.action))
-        sleep(1.0/30)
+        # self.state = (obs, reward, is_finished, info)
+        # print('acting {}'.format(self.action))
+        # sleep(1.0/30)
         return self.action
 
     def exit(self):
