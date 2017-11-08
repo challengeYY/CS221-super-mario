@@ -2,6 +2,9 @@ from abc import ABCMeta, abstractmethod
 import traceback
 from agent import *
 from time import sleep
+import numpy as np
+from enum import *
+from util import *
 
 class BaselineAgent(Agent):
     def __init__(self, options):
@@ -9,13 +12,19 @@ class BaselineAgent(Agent):
         self.state = None
 
     def initAction(self):
-        print('init act ...')
         return self.action
 
     def act(self, obs, reward, is_finished, info):
         self.state = (obs, reward, is_finished, info)
-        print('acting {}'.format(self.action))
-        sleep(1.0/30)
+        self.logAction()
+
+        ahead = get_tile_from_mario(obs, 3, 0)
+        if ahead is not None:
+            print('ahead ' + Tile.name(ahead))
+            if ahead == Tile.EMPTY_SPACE:
+                self.action = Action.act('Right')
+            elif ahead in [Tile.ENEMY, Tile.OBJECT]:
+                self.action = Action.act('A')
         return self.action
 
     def exit(self):
@@ -35,3 +44,4 @@ class BaselineAgent(Agent):
         print('encountering error, exiting ...')
         traceback.print_exc()
         exit(-1)
+
