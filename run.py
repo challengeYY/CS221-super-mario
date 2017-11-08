@@ -24,6 +24,8 @@ def main():
         env = wrapper(env)
     elif options.player == 'baseline':
         agent = BaselineAgent(options)
+        wrapper = SetPlayingMode('algo')
+        env = wrapper(env)
 
     env.no_render = False # not doing anything??
     env.reset()

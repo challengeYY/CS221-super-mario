@@ -14,11 +14,10 @@ class HumanAgent(Agent):
                 # self.listener = listener
 
     def initAction(self):
-        print('init act ...')
         return self.action
 
     def act(self, obs, reward, is_finished, info):
-        # self.state = (obs, reward, is_finished, info)
+        self.state = (obs, reward, is_finished, info)
         # print('acting {}'.format(self.action))
         # sleep(1.0/30)
         return self.action
@@ -30,7 +29,7 @@ class HumanAgent(Agent):
         total_score = info["distance"]
         stop = total_score > 32000
         if is_finished or stop:
-            self.listener.join()
+            # self.listener.join()
             if stop:
                 print('exiting the game cuz I no longer wanna play ...')
             return True
@@ -38,28 +37,28 @@ class HumanAgent(Agent):
             return False
 
     def handle(self, e):
-        self.listener.join()
+        # self.listener.join()
         print('encountering error, exiting ...')
         traceback.print_exc()
         exit(-1)
 
-    def on_press(self, key):
-        if key.char == 'a':
-            self.action[1] = 1
-        elif key.char == 'd':
-            self.action[3] = 1
-        elif key.char == 'j':
-            self.action[4] = 1
-        elif key.char == 'k':
-            self.action[5] = 1
+    # def on_press(self, key):
+        # if key.char == 'a':
+            # self.action[1] = 1
+        # elif key.char == 'd':
+            # self.action[3] = 1
+        # elif key.char == 'j':
+            # self.action[4] = 1
+        # elif key.char == 'k':
+            # self.action[5] = 1
     
-    def on_release(self, key):
-        if key.char == 'a':
-            self.action[1] = 0
-        elif key.char == 'd':
-            self.action[3] = 0
-        elif key.char == 'j':
-            self.action[4] = 0
-        elif key.char == 'k':
-            self.action[5] = 0
+    # def on_release(self, key):
+        # if key.char == 'a':
+            # self.action[1] = 0
+        # elif key.char == 'd':
+            # self.action[3] = 0
+        # elif key.char == 'j':
+            # self.action[4] = 0
+        # elif key.char == 'k':
+            # self.action[5] = 0
 
