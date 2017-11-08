@@ -3,19 +3,19 @@ from abc import ABCMeta, abstractmethod
 import traceback
 
 
-# Controller interface to interact with emulator
-class Controller:
+# Agent interface to interact with emulator
+class Agent:
     __metaclass__ = ABCMeta
 
-    # Controller's initial action 
+    # Agent's initial action 
     @abstractmethod
     def initAction(self): pass
 
-    # Controller returns a action based on the feedback from emulator
+    # Agent returns a action based on the feedback from emulator
     @abstractmethod
     def act(self, obs, reward, is_finished, info): pass
 
-    # Controller can determine when does it want to stop playing the game
+    # Agent can determine when does it want to stop playing the game
     @abstractmethod
     def exit(self): pass
 
