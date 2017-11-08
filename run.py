@@ -11,7 +11,7 @@ def main():
     usage = "Usage: run [options]"
     parser = argparse.ArgumentParser()
     parser.add_argument('--player', dest='player', action='store', default='human',
-            help='Specify the player')
+            help='Specify the player, valid option: human, baseline')
     parser.add_argument('--no-gui', dest='render', action='store_false',default=True,
         help='Do not render visualization of the game')
     (options, args) = parser.parse_known_args()
