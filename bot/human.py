@@ -4,14 +4,15 @@ import traceback
 from agent import *
 from time import sleep
 
+
 class HumanAgent(Agent):
     def __init__(self, options):
-        self.action = [0,0,0,0,0,0]
+        self.action = [0, 0, 0, 0, 0, 0]
         self.state = None
         # with keyboard.Listener(
-            # on_press=self.on_press,
-            # on_release=self.on_release) as listener:
-                # self.listener = listener
+        #    on_press=self.on_press,
+        #    on_release=self.on_release) as listener:
+        #    self.listener = listener
 
     def initAction(self):
         return self.action
@@ -42,23 +43,22 @@ class HumanAgent(Agent):
         traceback.print_exc()
         exit(-1)
 
-    # def on_press(self, key):
-        # if key.char == 'a':
-            # self.action[1] = 1
-        # elif key.char == 'd':
-            # self.action[3] = 1
-        # elif key.char == 'j':
-            # self.action[4] = 1
-        # elif key.char == 'k':
-            # self.action[5] = 1
-    
-    # def on_release(self, key):
-        # if key.char == 'a':
-            # self.action[1] = 0
-        # elif key.char == 'd':
-            # self.action[3] = 0
-        # elif key.char == 'j':
-            # self.action[4] = 0
-        # elif key.char == 'k':
-            # self.action[5] = 0
+        # def on_press(self, key):
+        #    if key.char == 'a':
+        #        self.action[1] = 1
+        #    elif key.char == 'd':
+        #        self.action[3] = 1
+        #    elif key.char == 'j':
+        #        self.action[4] = 1
+        #    elif key.char == 'k':
+        #        self.action[5] = 1
 
+        # def on_release(self, key):
+        #    if key.char == 'a':
+        #        self.action[1] = 0
+        #    elif key.char == 'd':
+        #        self.action[3] = 0
+        #    elif key.char == 'j':
+        #        self.action[4] = 0
+        #    elif key.char == 'k':
+        #        self.action[5] = 0

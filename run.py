@@ -4,9 +4,6 @@ from ppaquette_gym_super_mario.wrappers.control import *
 import argparse
 from bot import *
 
-# import gym_pull
-# gym_pull.pull('github.com/ppaquette/gym-super-mario') 
-
 def main():
     usage = "Usage: run [options]"
     parser = argparse.ArgumentParser()
@@ -33,6 +30,7 @@ def main():
     try:
         action = agent.initAction()
         while not agent.exit():
+            sleep(0.1)
             obs, reward, is_finished, info = env.step(action)
             if options.render:
                 env.render()
