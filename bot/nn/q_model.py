@@ -4,14 +4,10 @@ from __future__ import print_function
 
 import logging
 import os
-import time
 from datetime import datetime
 
-import numpy as np
 import tensorflow as tf
 from tensorflow.python.ops import variable_scope as vs
-
-from util import Progbar, get_minibatch
 
 logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.INFO)
 
@@ -29,12 +25,13 @@ def get_optimizer(opt):
 
 
 class QModel(object):
-    def __init__(self, stateVectorLength, optimizer='adam', lr=0.01, decay_step=1000, decay_rate=0):
+    def __init__(self, stateVectorLength, optimizer='adam', lr=0.01, decay_step=1000, decay_rate=0, regularization=0):
         """
         Initializes your System
         :param stateVectorLength: Length of vector used to represent state and action.
         :param optimizer: Name of optimizer.
         """
+        self.regularization = regularization
 
         # ==== set up placeholder tokens ========
         self.stateVectorLength = stateVectorLength
@@ -64,17 +61,17 @@ class QModel(object):
         """
         with tf.variable_scope("QModel", initializer=tf.uniform_unit_scaling_initializer(1.0)):
             w_1 = vs.get_variable('W1', [self.stateVectorLength, self.stateVectorLength], dtype=tf.float32,
-                                  initializer=tf.contrib.layers.xavier_initializer())
+                                  initializer=tf.contrib.layers.xavier_initializer(), collections=tf.GraphKeys.WEIGHTS)
             b_1 = vs.get_variable('B1', [self.stateVectorLength], dtype=tf.float32,
                                   initializer=tf.zeros())
             h_1 = tf.matmul(self.placeholders['input_state_action'], w_1) + b_1
             w_2 = vs.get_variable('W2', [self.stateVectorLength, self.stateVectorLength], dtype=tf.float32,
-                                  initializer=tf.contrib.layers.xavier_initializer())
+                                  initializer=tf.contrib.layers.xavier_initializer(), collections=tf.GraphKeys.WEIGHTS)
             b_2 = vs.get_variable('B2', [self.stateVectorLength], dtype=tf.float32,
                                   initializer=tf.zeros())
             h_2 = tf.matmul(h_1, w_2) + b_2
             w_3 = vs.get_variable('W3', [self.stateVectorLength, 1], dtype=tf.float32,
-                                  initializer=tf.contrib.layers.xavier_initializer())
+                                  initializer=tf.contrib.layers.xavier_initializer(), collections=tf.GraphKeys.WEIGHTS)
             b_3 = vs.get_variable('B3', [1], dtype=tf.float32,
                                   initializer=tf.zeros())
             self.predicted_Q = tf.matmul(h_2, w_3) + b_3
@@ -86,7 +83,9 @@ class QModel(object):
         Set up your loss computation here
         """
         with vs.variable_scope("loss"):
-            self.loss = tf.losses.mean_squared_error(self.placeholders['target_q'], self.predicted_Q)
+            raw_loss = tf.losses.mean_squared_error(self.placeholders['target_q'], self.predicted_Q)
+            reg_loss = tf.contrib.layers.apply_regularization(tf.contrib.layers.l2_regularizer(self.regularization))
+            self.loss = raw_loss + reg_loss
 
     def inference(self, state_and_actions):
         """
@@ -107,7 +106,7 @@ class QModel(object):
         predicted_Q = self.sess.run(self.train_op,
                                     feed_dict={
                                         self.placeholders['input_state_action']: state_and_actions,
-                                    self.placeholders['target_q']: target_Q})
+                                        self.placeholders['target_q']: target_Q})
         return predicted_Q
 
     def save_model(self, output_path):
