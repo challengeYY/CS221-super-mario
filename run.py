@@ -30,7 +30,7 @@ def main():
     elif options.player == 'mfeature':
         agent = ManualFeatureAgent(options, env)
 
-    env.no_render = False # not doing anything??
+    # env.no_render = False # not doing anything??
     env.reset()
 
     try:
