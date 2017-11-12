@@ -3,6 +3,7 @@ from abc import ABCMeta, abstractmethod
 import traceback
 from agent import *
 from time import sleep
+import pickle
 
 
 class HumanAgent(Agent):
@@ -19,7 +20,7 @@ class HumanAgent(Agent):
 
     def act(self, obs, reward, is_finished, info):
         self.state = (obs, reward, is_finished, info)
-        sleep(0.1)
+        # sleep(0.1)
         # print('acting {}'.format(self.action))
         # sleep(1.0/30)
         return self.action
