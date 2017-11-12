@@ -27,6 +27,7 @@ def get_optimizer(opt):
         assert (False)
     return optfn
 
+
 class QModel(object):
     def __init__(self, stateVectorLength, optimizer='adam', lr=0.01, decay_step=1000, decay_rate=0):
         """
@@ -36,44 +37,56 @@ class QModel(object):
         """
 
         # ==== set up placeholder tokens ========
+        self.stateVectorLength = stateVectorLength
+        self.placeholders = {}
+        self.placeholders['input_state_action'] = tf.placeholder(tf.float32, shape=(None, stateVectorLength))
+        self.placeholders['target_q'] = tf.placeholder(tf.float32, shape=(None, 1))
 
         # ==== assemble pieces ====
-        with tf.variable_scope("QModel", initializer=tf.uniform_unit_scaling_initializer(1.0)):
-            self.setup_model()
+        self.setup_model()
 
         # ==== set up training/updating procedure ====
         # implement learning rate annealing
         global_step = tf.Variable(0, trainable=False)
         self.lr = tf.train.exponential_decay(lr, global_step, decay_step, decay_rate,
-                                        staircase=True)
+                                             staircase=True)
 
-        self.stateVectorLength = stateVectorLength
         self.global_step = global_step
         optimizer = get_optimizer(optimizer)(self.lr)
         self.train_op = optimizer.minimize(self.loss, global_step=global_step)
 
         self.saver = tf.train.Saver(max_to_keep=50)
+        self.sess = tf.Session()
 
     def setup_model(self):
         """
         Construct the tf graph.
         """
+        with tf.variable_scope("QModel", initializer=tf.uniform_unit_scaling_initializer(1.0)):
+            w_1 = vs.get_variable('W1', [self.stateVectorLength, self.stateVectorLength], dtype=tf.float32,
+                                  initializer=tf.contrib.layers.xavier_initializer())
+            b_1 = vs.get_variable('B1', [self.stateVectorLength], dtype=tf.float32,
+                                  initializer=tf.zeros())
+            h_1 = tf.matmul(self.placeholders['input_state_action'], w_1) + b_1
+            w_2 = vs.get_variable('W2', [self.stateVectorLength, self.stateVectorLength], dtype=tf.float32,
+                                  initializer=tf.contrib.layers.xavier_initializer())
+            b_2 = vs.get_variable('B2', [self.stateVectorLength], dtype=tf.float32,
+                                  initializer=tf.zeros())
+            h_2 = tf.matmul(h_1, w_2) + b_2
+            w_3 = vs.get_variable('W3', [self.stateVectorLength, 1], dtype=tf.float32,
+                                  initializer=tf.contrib.layers.xavier_initializer())
+            b_3 = vs.get_variable('B3', [1], dtype=tf.float32,
+                                  initializer=tf.zeros())
+            self.predicted_Q = tf.matmul(h_2, w_3) + b_3
 
-        rep = self.encoder.encode((qn_embeddings, con_embeddings),
-                                  (self.qns_mask_placeholder, self.cons_mask_placeholder),
-                                  dropout=self.dropout_placeholder)
-
-        self.start_pred, self.end_pred = self.decoder.decode(rep, self.cons_mask_placeholder,
-                                                             dropout=self.dropout_placeholder)
-        self.yp = tf.nn.softmax(self.start_pred)
-        self.yp2 = tf.nn.softmax(self.end_pred)
-        self.setup_loss()
+            self.setup_loss()
 
     def setup_loss(self):
         """
         Set up your loss computation here
         """
         with vs.variable_scope("loss"):
+            self.loss = tf.losses.mean_squared_error(self.placeholders['target_q'], self.predicted_Q)
 
     def inference(self, state_and_actions):
         """
@@ -81,36 +94,9 @@ class QModel(object):
         :param state_and_actions: A list of state and actions. Each state action pair is represented by a list of float32.
         :return Predicted Q value of given state and action.
         """
-        # padded_train_qns, mask_train_qns, padded_train_cons, mask_train_cons, train_y, train_answers = train_examples
-        # train_examples = [padded_train_qns, mask_train_qns, padded_train_cons, mask_train_cons, train_y]
-        # prog = Progbar(target=1 + int(len(train_examples[0]) / FLAGS.batch_size))
-        # for i, batch in enumerate(get_minibatches(train_examples, FLAGS.batch_size)):
-        #     loss, clipped_grad_norm, grad_norm, lr, gs = self.optimize(sess, *batch)
-        #     prog.update(i + 1, [("train loss", loss)],
-        #                 [("clipped grad norm", clipped_grad_norm), ("grad norm", grad_norm), ("learning rate", lr),
-        #                  ("global step", gs)])
-
-        # logging.info("Calculating F1 and EM for 1000 training examples...")
-        # train_examples_for_eval = zip(padded_train_qns, mask_train_qns, padded_train_cons, mask_train_cons,
-        #                               train_answers)
-        # self.evaluate_answer(sess, train_examples_for_eval, rev_vocab, sample=1000)
-
-        # logging.info("Evaluating on validation set...")
-        # padded_val_qns, mask_val_qns, padded_val_cons, mask_val_cons, valid_y, val_answers = valid_examples
-        # valid_examples = [padded_val_qns, mask_val_qns, padded_val_cons, mask_val_cons, valid_y]
-        # prog = Progbar(target=1 + len(valid_examples[0]) / FLAGS.batch_size)
-        # total_val_loss = 0
-        # for i, batch in enumerate(get_minibatches(valid_examples, FLAGS.batch_size)):
-        #     loss = self.validate(sess, *batch)
-        #     prog.update(i + 1, [("validation loss", loss[0])])
-        #     total_val_loss += loss[1]
-        # total_val_loss = total_val_loss / len(valid_examples[0])
-
-        # # evaluate in each epoch
-        # logging.info("Calculating F1 and EM for 100 validation examples...")
-        # valid_examples_for_eval = zip(padded_val_qns, mask_val_qns, padded_val_cons, mask_val_cons, val_answers)
-        # self.evaluate_answer(sess, valid_examples_for_eval, rev_vocab)
-        # return total_val_loss
+        predicted_Q = self.sess.run(self.predicted_Q,
+                                    feed_dict={self.placeholders['input_state_action']: state_and_actions})
+        return predicted_Q
 
     def update_weights(self, state_and_actions, target_Q):
         """
@@ -118,39 +104,32 @@ class QModel(object):
         :param state_and_actions: A list of state and actions. Each state action pair is represented by a list of float32.
         :param target_Q: A list of r + /gamma V.
         """
+        predicted_Q = self.sess.run(self.train_op,
+                                    feed_dict={
+                                        self.placeholders['input_state_action']: state_and_actions,
+                                    self.placeholders['target_q']: target_Q})
+        return predicted_Q
 
-        # some free code to print out number of parameters in your model
-        # it's always good to check!
-        # you will also want to save your model parameters in train_dir
-        # so that you can use your trained model to make predictions, or
-        # even continue training
+    def save_model(self, output_path):
+        """
+        Save the current graph and weights to the output_path.
+        :return:
+        """
+        # save model weights
+        model_path = output_path + "/{:%Y%m%d_%H%M%S}".format(
+            datetime.now()) + "/"
+        if not os.path.exists(model_path):
+            os.makedirs(model_path)
+        logging.info("Saving model parameters...")
+        self.saver.save(self.session, model_path + "model.weights")
 
-        # tic = time.time()
-        # params = tf.trainable_variables()
-        # num_params = sum(map(lambda t: np.prod(tf.shape(t.value()).eval()), params))
-        # toc = time.time()
-        # logging.info("Number of params: %d (retreival took %f secs)" % (num_params, toc - tic))
-
-        # # extract the inputs
-        # raw_train_examples, raw_val_set = dataset
-        # train_qns, train_cons, train_y, train_answer = raw_train_examples
-        # val_qns, val_cons, valid_y, val_answer = raw_val_set
-        # # preprocess the inputs
-        # padded_train_qns, mask_train_qns = preprocess_inputs(train_qns, FLAGS.qn_max_len)
-        # padded_train_cons, mask_train_cons = preprocess_inputs(train_cons, FLAGS.con_max_len)
-        # padded_val_qns, mask_val_qns = preprocess_inputs(val_qns, FLAGS.qn_max_len)
-        # padded_val_cons, mask_val_cons = preprocess_inputs(val_cons, FLAGS.con_max_len)
-        # logging.info("Finished preprocessing")
-        # train_examples = [padded_train_qns, mask_train_qns, padded_train_cons, mask_train_cons, train_y, train_answer]
-        # valid_examples = [padded_val_qns, mask_val_qns, padded_val_cons, mask_val_cons, valid_y, val_answer]
-        # # training
-        # for epoch in range(FLAGS.epochs):
-        #     logging.info("Epoch %d out of %d", epoch + 1, FLAGS.epochs)
-        #     total_val_loss = self.run_epoch(session, train_examples, valid_examples, rev_vocab)
-        #     # save model weights
-        #     model_path = FLAGS.train_dir + "/{:%Y%m%d_%H%M%S}".format(
-        #         datetime.now()) + "_val_loss_" + str(total_val_loss) + "/"
-        #     if not os.path.exists(model_path):
-        #         os.makedirs(model_path)
-        #     logging.info("Saving model parameters...")
-        #     self.saver.save(session, model_path + "model.weights")
+    def initialize_model(self, model_dir):
+        ckpt = tf.train.get_checkpoint_state(model_dir)
+        v2_path = ckpt.model_checkpoint_path + ".index" if ckpt else ""
+        if ckpt and (tf.gfile.Exists(ckpt.model_checkpoint_path) or tf.gfile.Exists(v2_path)):
+            logging.info("Reading model parameters from %s" % ckpt.model_checkpoint_path)
+            self.saver.restore(self.session, ckpt.model_checkpoint_path)
+        else:
+            logging.info("Created model with fresh parameters.")
+            self.session.run(tf.global_variables_initializer())
+            logging.info('Num params: %d' % sum(v.get_shape().num_elements() for v in tf.trainable_variables()))
