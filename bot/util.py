@@ -22,3 +22,15 @@ def get_tile_from_mario(obs, step_x, step_y):
 def get_reward(state):
     obs, reward, is_finished, info = state
     return reward
+
+def get_obs(state):
+    obs, reward, is_finished, info = state
+    return obs
+
+def is_finished(state):
+    obs, reward, is_finished, info = state
+    return is_finished
+
+def get_info(state):
+    obs, reward, is_finished, info = state
+    return info
