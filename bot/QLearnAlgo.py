@@ -49,7 +49,7 @@ class QLearningAlgorithm():
     def incorporateFeedback(self, state, action, newState):
         # BEGIN_YOUR_CODE (our solution is 12 lines of code, but don't worry if you deviate from this)
         if newState is None: return
-        reward = get_reward(newState) - get_reward(state)
+        reward = get_reward(newState)
         self.statecache.append(state)
         self.actioncache.append(action)
         self.rewardcache.append(reward)
