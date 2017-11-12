@@ -4,7 +4,7 @@ from time import sleep
 import numpy as np
 from enum import *
 from util import *
-from QLearning import *
+from QLearnAlgo import *
 
 class QLearnAgent(Agent):
     def __init__(self, options, env):

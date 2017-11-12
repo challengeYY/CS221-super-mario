@@ -106,10 +106,11 @@ class QModel(object):
         :param state_and_actions: A list of state and actions. Each state action pair is represented by a list of float32.
         :param target_Q: A list of r + /gamma V.
         """
-        predicted_Q = self.sess.run(self.train_op,
+        predicted_Q, loss = self.sess.run([self.train_op, loss],
                                     feed_dict={
                                         self.placeholders['input_state_action']: state_and_actions,
                                         self.placeholders['target_q']: target_Q})
+        print ('loss: {}', loss)
         return predicted_Q
 
     def save_model(self, output_path):
