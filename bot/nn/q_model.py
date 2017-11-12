@@ -4,14 +4,11 @@ from __future__ import print_function
 
 import logging
 import os
-import time
 from datetime import datetime
 
-import numpy as np
 import tensorflow as tf
 from tensorflow.python.ops import variable_scope as vs
 
-from util import Progbar, get_minibatch
 
 logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.INFO)
 
