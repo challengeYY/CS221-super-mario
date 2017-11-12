@@ -9,7 +9,6 @@ from datetime import datetime
 import tensorflow as tf
 from tensorflow.python.ops import variable_scope as vs
 
-
 logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.INFO)
 
 FLAGS = tf.app.flags.FLAGS
@@ -26,12 +25,13 @@ def get_optimizer(opt):
 
 
 class QModel(object):
-    def __init__(self, stateVectorLength, optimizer='adam', lr=0.01, decay_step=1000, decay_rate=0):
+    def __init__(self, stateVectorLength, optimizer='adam', lr=0.01, decay_step=1000, decay_rate=0, regularization=0):
         """
         Initializes your System
         :param stateVectorLength: Length of vector used to represent state and action.
         :param optimizer: Name of optimizer.
         """
+        self.regularization = regularization
 
         # ==== set up placeholder tokens ========
         self.stateVectorLength = stateVectorLength
@@ -83,7 +83,9 @@ class QModel(object):
         Set up your loss computation here
         """
         with vs.variable_scope("loss"):
-            self.loss = tf.losses.mean_squared_error(self.placeholders['target_q'], self.predicted_Q)
+            raw_loss = tf.losses.mean_squared_error(self.placeholders['target_q'], self.predicted_Q)
+            reg_loss = tf.contrib.layers.apply_regularization(tf.contrib.layers.l2_regularizer(self.regularization))
+            self.loss = raw_loss + reg_loss
 
     def inference(self, state_and_actions):
         """
@@ -104,7 +106,7 @@ class QModel(object):
         predicted_Q = self.sess.run(self.train_op,
                                     feed_dict={
                                         self.placeholders['input_state_action']: state_and_actions,
-                                    self.placeholders['target_q']: target_Q})
+                                        self.placeholders['target_q']: target_Q})
         return predicted_Q
 
     def save_model(self, output_path):
