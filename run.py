@@ -24,14 +24,12 @@ def main():
         wrapper = SetPlayingMode('algo')
         env = wrapper(env)
 
-    env.no_render = False # not doing anything??
+    # env.no_render = False # not doing anything??
     env.reset()
 
     try:
         action = agent.initAction()
         while not agent.exit():
-            if options.player == 'human':
-                sleep(0.1)
             obs, reward, is_finished, info = env.step(action)
             if options.render:
                 env.render()
