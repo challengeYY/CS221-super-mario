@@ -61,22 +61,23 @@ class QModel(object):
         """
         with tf.variable_scope("QModel", initializer=tf.uniform_unit_scaling_initializer(1.0)):
             w_1 = vs.get_variable('W1', [self.stateVectorLength, self.stateVectorLength], dtype=tf.float32,
-                                  initializer=tf.contrib.layers.xavier_initializer(),
-                                  collections=[tf.GraphKeys.WEIGHTS])
+                                  initializer=tf.contrib.layers.xavier_initializer()
+                                  )
             b_1 = vs.get_variable('B1', [self.stateVectorLength], dtype=tf.float32,
                                   initializer=tf.constant_initializer(0))
             h_1 = tf.matmul(self.placeholders['input_state_action'], w_1) + b_1
             w_2 = vs.get_variable('W2', [self.stateVectorLength, self.stateVectorLength], dtype=tf.float32,
-                                  initializer=tf.contrib.layers.xavier_initializer(),
-                                  collections=[tf.GraphKeys.WEIGHTS])
+                                  initializer=tf.contrib.layers.xavier_initializer())
             b_2 = vs.get_variable('B2', [self.stateVectorLength], dtype=tf.float32,
                                   initializer=tf.constant_initializer(0))
             h_2 = tf.matmul(h_1, w_2) + b_2
             w_3 = vs.get_variable('W3', [self.stateVectorLength, 1], dtype=tf.float32,
-                                  initializer=tf.contrib.layers.xavier_initializer(),
-                                  collections=[tf.GraphKeys.WEIGHTS])
+                                  initializer=tf.contrib.layers.xavier_initializer())
             b_3 = vs.get_variable('B3', [1], dtype=tf.float32,
                                   initializer=tf.constant_initializer(0))
+            tf.add_to_collection(tf.GraphKeys.WEIGHTS,w_1)
+            tf.add_to_collection(tf.GraphKeys.WEIGHTS,w_2)
+            tf.add_to_collection(tf.GraphKeys.WEIGHTS,w_3)
             self.predicted_Q = tf.matmul(h_2, w_3) + b_3
 
             self.setup_loss()
@@ -136,3 +137,5 @@ class QModel(object):
             logging.info("Created model with fresh parameters.")
             self.sess.run(tf.global_variables_initializer())
             logging.info('Num params: %d' % sum(v.get_shape().num_elements() for v in tf.trainable_variables()))
+        init = tf.global_variables_initializer()
+        self.sess.run(init)

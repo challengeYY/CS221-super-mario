@@ -57,7 +57,7 @@ class QLearningAlgorithm():
             Y = []
             for i in range(1, self.batchsize+1):
                 window = self.statecache[-self.windowsize-i-1:-i]
-                X.append(self.featureExtractor((window, action)))
+                X.append(self.featureExtractor(window, action))
                 reward = get_reward(self.statecache[-i])
                 Vopt = max([self.getQ(self.statecache[-self.windowsize:], a) for a in self.actions(newState)])
                 target = (reward + gamma * Vopt)

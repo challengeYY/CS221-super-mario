@@ -40,7 +40,7 @@ class FeatureAgent(QLearnAgent):
         feature.append(info['time'])
         actions = [0] * len(Action.NAME)
         if action == Action.NO_ACTION:
-            feature += Action.empty + [1]
+            feature += Action.empty() + [1]
         else:
             feature += Action.act(action) + [0]
         feature = np.array(feature)
