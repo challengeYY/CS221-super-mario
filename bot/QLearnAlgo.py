@@ -10,7 +10,6 @@ class QLearningAlgorithm():
         self.batchsize = 10 # number of frames to retrain the model
         self.windowsize = windowsize  # number of frames to look back in a state
         self.statecache = []
-        self.rewardcache = []
         self.actioncache = []
         self.batchcounter = 0
         self.options = options
@@ -22,8 +21,8 @@ class QLearningAlgorithm():
     # Return the Q function associated with the weights and features
     def getQ(self, state, action):
         score = 0
-        window = self.statecache[-self.windowsize+1:-1] + [state]
-        x = self.featureExtractor((window, action))
+        window = self.statecache[-self.windowsize:-1] + [state]
+        x = self.featureExtractor(window, action)
         score, = self.model.inference([x])
         return score
 
@@ -48,12 +47,6 @@ class QLearningAlgorithm():
     # self.getQ() to compute the current estimate of the parameters.
     def incorporateFeedback(self, state, action, newState):
         # BEGIN_YOUR_CODE (our solution is 12 lines of code, but don't worry if you deviate from this)
-        if newState is None: return
-        reward = get_reward(newState)
-        self.statecache.append(state)
-        self.actioncache.append(action)
-        self.rewardcache.append(reward)
-
         self.batchcounter += 1
 
         if self.batchcounter >= self.batchsize:
@@ -63,9 +56,9 @@ class QLearningAlgorithm():
             X = []
             Y = []
             for i in range(1, self.batchsize+1):
-                window = self.statecache[-self.windowsize-i:-i]
+                window = self.statecache[-self.windowsize-i-1:-i]
                 X.append(self.featureExtractor((window, action)))
-                reward = self.rewardcache[-i]
+                reward = get_reward(self.statecache[-i])
                 Vopt = max([self.getQ(self.statecache[-self.windowsize:], a) for a in self.actions(newState)])
                 target = (reward + gamma * Vopt)
                 Y.append(target)
