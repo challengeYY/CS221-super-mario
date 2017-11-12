@@ -24,7 +24,6 @@ def main():
         wrapper = SetPlayingMode('algo')
         env = wrapper(env)
 
-    # env.no_render = False # not doing anything??
     env.reset()
 
     try:
