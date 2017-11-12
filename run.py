@@ -28,7 +28,7 @@ def main():
         wrapper = SetPlayingMode('algo')
         env = wrapper(env)
     elif options.player == 'mfeature':
-        agent = ManualFeatureAgent(options, env)
+        agent = FeatureAgent(options, env)
 
     env.reset()
 

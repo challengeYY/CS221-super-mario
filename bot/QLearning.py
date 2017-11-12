@@ -6,7 +6,7 @@ class QLearningAlgorithm():
         self.featureExtractor = featureExtractor
         self.explorationProb = explorationProb
         self.numIters = 0
-        self.batc, hsize = 10 # number of frames to retrain the model
+        self.batchsize = 10 # number of frames to retrain the model
         self.windowsize = 3  # number of frames to look back in a state
         self.statecache = []
         self.rewardcache = []
@@ -20,7 +20,7 @@ class QLearningAlgorithm():
         score = 0
         window = self.statecache[-self.windowsize+1:-1] + [state]
         x = self.featureExtractor((window, action))
-        score, = self.model.predict([x])
+        score, = self.model.inference([x])
         return score
 
     # This algorithm will produce an action given a state.
@@ -52,7 +52,7 @@ class QLearningAlgorithm():
         eta = self.getStepSize()
 
         self.batchcounter += 1
-        
+
         if self.batchcounter >= self.batchsize:
             self.batchcounter = 0
             gamma = self.discount
@@ -66,4 +66,4 @@ class QLearningAlgorithm():
                 Vopt = max([self.getQ(self.statecache[-self.windowsize:], a) for a in self.actions(newState)])
                 target = (reward + gamma * Vopt)
                 Y.append(target)
-            self.model.train(X, Y)
+            self.model.update_weights(X, Y)

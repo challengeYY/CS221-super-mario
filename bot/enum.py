@@ -14,6 +14,10 @@ class Window:
     Width = 16
     Height = 13
 
+    @staticmethod
+    def getFrameSize():
+        return Window.Width * Window.Height
+
 class Action:
     NAME = ['Up', 'Left', 'Down', 'Right', 'A', 'B']
     NO_ACTION = 'NO_ACTION'
@@ -39,3 +43,7 @@ class Action:
         else: # a single name
             action[Action.index(name)] = 1
         return action
+
+    @staticmethod
+    def empty:
+        return len(NAME) * [0]

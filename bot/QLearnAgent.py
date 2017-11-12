@@ -12,11 +12,10 @@ class QLearnAgent(Agent):
         self.maxGameIter = options.maxGameIter
         self.gameIter = 0
         self.isTrain = options.isTrain
-        self.model = #TODO
         self.env = env
         self.algo = QLearningAlgorithm(
                 options = options,
-                actions = self.get_possible_actions, 
+                actions = self.get_possible_actions,
                 discount = 1,
                 featureExtractor = self.featureExtractor,
                 model = self.model,
@@ -53,18 +52,15 @@ class QLearnAgent(Agent):
         self.env.reset()
 
         (obs, reward, is_finished, info) = self.state
-        total_score = info["distance"]
-        # TODO: if stay at the same place for too long
-        stop = total_score > 32000
+        stuck = info['ignore']
 
         reachMaxIter = self.gameIter == self.maxGameIter
 
         exit = (reachMaxIter and self.isTrain) or not self.isTrain
-        exit = exit and (is_finished or stop)
-        return exit 
+        exit = exit and (is_finished or stuck)
+        return exit
 
     def handle(self, e):
         print('encountering error, exiting ...')
         traceback.print_exc()
         exit(-1)
-
