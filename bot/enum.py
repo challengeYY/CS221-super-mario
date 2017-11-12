@@ -16,6 +16,7 @@ class Window:
 
 class Action:
     NAME = ['Up', 'Left', 'Down', 'Right', 'A', 'B']
+    NO_ACTION = 'NO_ACTION'
 
     @staticmethod
     def index(name):
