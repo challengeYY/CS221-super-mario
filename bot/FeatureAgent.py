@@ -8,6 +8,7 @@ class FeatureAgent(QLearnAgent):
         featureSize = Window.getFrameSize() * self.windowsize
         featureSize += 4
         featureSize += len(Action.NAME) + 1
+        print('featureSize', featureSize)
         self.model = QModel(
             stateVectorLength=featureSize, 
             optimizer='adam', 
@@ -39,11 +40,11 @@ class FeatureAgent(QLearnAgent):
         feature.append(info['time'])
         actions = [0] * len(Action.NAME)
         if action == Action.NO_ACTION:
-            feacture.append(Action.empty + [1])
+            feature += Action.empty + [1]
         else:
-            feature.append(Action.act(action) + [0])
+            feature += Action.act(action) + [0]
         feature = np.array(feature)
         for state in window:
             obs = get_obs(state)
-            feature = np.concatenate(feature, obs.flatten(), axis=0)
+            feature = np.concatenate((feature, obs.flatten()), axis=0)
         return feature

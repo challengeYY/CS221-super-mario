@@ -28,7 +28,7 @@ class QLearnAgent(Agent):
         return ['Left', 'Right', 'A', 'B'] + [Action.NO_ACTION]
 
     def featureExtractor(self, window, action):
-        pass
+        raise Exception('Abstract method! should be overritten')
 
     def initAction(self):
         return self.action
@@ -38,11 +38,14 @@ class QLearnAgent(Agent):
 
         if len(self.algo.statecache) >= 1:
             prevState = self.algo.statecache[-1]
-            prevAction = self.algo.action[-1]
-            prevReward = self.algo.rewardcache[-1]
-            self.algo.incorporateFeedback(prevState, prevAction, prevReward, self.state)
+            prevAction = self.algo.actioncache[-1]
+            self.algo.incorporateFeedback(prevState, prevAction, self.state)
 
         self.action = self.algo.getAction(self.state)
+
+        # caching states
+        self.algo.statecache.append(self.state)
+        self.algo.actioncache.append(self.action)
 
         self.logAction()
         return self.action
@@ -53,7 +56,6 @@ class QLearnAgent(Agent):
         if is_finished(self.state):
             self.gameIter += 1
             self.env.reset()
-            self.algo.rewardcache = []
             self.algo.actioncache = []
             self.algo.statecache = []
             self.algo.batchcounter = 0
