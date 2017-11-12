@@ -1,19 +1,23 @@
+import random
+from util import *
 
 class QLearningAlgorithm():
-    def __init__(self, options, actions, discount, featureExtractor, model, explorationProb=0.2):
+    def __init__(self, options, actions, discount, featureExtractor, windowsize, explorationProb=0.2):
         self.actions = actions
         self.discount = discount
         self.featureExtractor = featureExtractor
         self.explorationProb = explorationProb
-        self.numIters = 0
         self.batchsize = 10 # number of frames to retrain the model
-        self.windowsize = 3  # number of frames to look back in a state
+        self.windowsize = windowsize  # number of frames to look back in a state
         self.statecache = []
         self.rewardcache = []
         self.actioncache = []
         self.batchcounter = 0
-        self.model = model
         self.options = options
+        self.model = None
+
+    def set_model(self, model):
+        self.model = model
 
     # Return the Q function associated with the weights and features
     def getQ(self, state, action):
@@ -27,16 +31,16 @@ class QLearningAlgorithm():
     # Here we use the epsilon-greedy algorithm: with probability
     # |explorationProb|, take a random action.
     def getAction(self, state):
-        self.numIters += 1
-        if (random.random() < self.explorationProb or len(self.statecache) < self.windowsize) and self.options.isTrain:
-            return random.choice(self.actions(state))
+        rand = random.random()
+        if rand < self.explorationProb and self.options.isTrain:
+            actionName = random.choice(self.actions(state))
+        elif len(self.statecache) < self.windowsize:
+            actionName = 'Right'
         else:
-            Qopt = self.getQ(state, action)
-            return max((Qopt, action) for action in self.actions(state))[1]
+            actionName = max((self.getQ(state, action), action) for action in self.actions(state))[1]
+        return Action.act(actionName)
 
     # Call this function to get the step size to update the weights.
-    def getStepSize(self):
-        return 1.0 / math.sqrt(self.numIters)
 
     # We will call this function with (s, a, r, s'), which you should use to update |weights|.
     # Note that if s is a terminal state, then s' will be None.  Remember to check for this.
@@ -49,7 +53,6 @@ class QLearningAlgorithm():
         self.statecache.append(state)
         self.actioncache.append(action)
         self.rewardcache.append(reward)
-        eta = self.getStepSize()
 
         self.batchcounter += 1
 

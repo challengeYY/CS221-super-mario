@@ -7,11 +7,13 @@ from bot import *
 def main():
     usage = "Usage: run [options]"
     parser = argparse.ArgumentParser()
+    parser.add_argument('--model_dir', dest='model_dir', action='store', default='model/',
+            help='Directory to store weights')
     parser.add_argument('--player', dest='player', action='store', default='human',
             help='Specify the player, valid option: human, baseline')
     parser.add_argument('--no-gui', dest='render', action='store_false',default=True,
         help='Do not render visualization of the game')
-    parser.add_argument('--maxIter', dest='maxIter', nargs='?', default=1, type=int,
+    parser.add_argument('--maxGameIter', dest='maxGameIter', nargs='?', default=1, type=int,
             help='Max number of training iteration')
     parser.add_argument('--train', dest='isTrain', action='store_true',default=False,
         help='Training mode')
@@ -23,12 +25,17 @@ def main():
         agent = HumanAgent(options)
         wrapper = SetPlayingMode('human')
         env = wrapper(env)
+        options.isTrain = False
     elif options.player == 'baseline':
         agent = BaselineAgent(options)
         wrapper = SetPlayingMode('algo')
         env = wrapper(env)
-    elif options.player == 'mfeature':
+        options.isTrain = False
+    elif options.player == 'feature':
         agent = FeatureAgent(options, env)
+
+    if not options.isTrain:
+        options.maxGameIter = 1
 
     env.reset()
 

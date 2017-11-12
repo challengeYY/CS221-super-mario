@@ -36,14 +36,24 @@ class Action:
 
     @staticmethod
     def act(name):
-        action = [0] * len(Action.NAME)
+        action = Action.empty() 
         if type(name) is list: # a list of names
             for n in name:
                 action[Action.index(n)] = 1
-        else: # a single name
+        elif name != Action.NO_ACTION: # a single name
             action[Action.index(name)] = 1
         return action
 
     @staticmethod
-    def empty:
-        return len(NAME) * [0]
+    def empty():
+        return len(Action.NAME) * [0]
+
+    @staticmethod
+    def toString(action):
+        n = ""
+        for i, act in enumerate(action):
+            if act == 1:
+                n += Action.NAME[i] + ' '
+        if n == "":
+            n = Action.NO_ACTION
+        return n

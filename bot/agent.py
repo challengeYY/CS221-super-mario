@@ -38,8 +38,4 @@ class Agent:
     def handle(self, e): pass
 
     def logAction(self):
-        actions = []
-        for i, act in enumerate(self.action):
-            if act == 1:
-                actions.append(Action.NAME[i])
-        print('acting {}'.format(' '.join(actions)))
+        print('acting {}'.format(Action.toString(self.action)))

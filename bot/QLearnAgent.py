@@ -4,12 +4,14 @@ from time import sleep
 import numpy as np
 from enum import *
 from util import *
+from QLearning import *
 
 class QLearnAgent(Agent):
     def __init__(self, options, env):
         self.action = [0,0,0,0,0,0]
         self.state = None
         self.maxGameIter = options.maxGameIter
+        self.windowsize = 3
         self.gameIter = 0
         self.isTrain = options.isTrain
         self.env = env
@@ -18,12 +20,12 @@ class QLearnAgent(Agent):
                 actions = self.get_possible_actions,
                 discount = 1,
                 featureExtractor = self.featureExtractor,
-                model = self.model,
-                explorationProb = 0.2
+                windowsize = self.windowsize,
+                explorationProb = 0.4
                 )
 
     def get_possible_actions(self, state):
-        return Action.NAME + [Action.NO_ACTION]
+        return ['Left', 'Right', 'A', 'B'] + [Action.NO_ACTION]
 
     def featureExtractor(self, window, action):
         pass
@@ -40,7 +42,7 @@ class QLearnAgent(Agent):
             prevReward = self.algo.rewardcache[-1]
             self.algo.incorporateFeedback(prevState, prevAction, prevReward, self.state)
 
-        action = self.getAction(self.state)
+        self.action = self.algo.getAction(self.state)
 
         self.logAction()
         return self.action
@@ -48,13 +50,20 @@ class QLearnAgent(Agent):
     def exit(self):
         if self.state is None:
             return False
-        self.gameIter += 1
-        self.env.reset()
+        if is_finished(self.state):
+            self.gameIter += 1
+            self.env.reset()
+            self.algo.rewardcache = []
+            self.algo.actioncache = []
+            self.algo.statecache = []
+            self.algo.batchcounter = 0
 
-        (obs, reward, is_finished, info) = self.state
-        stuck = info['ignore']
+        info = get_info(self.state)
+        stuck = False
+        if 'ignore' in info:
+            stuck = info['ignore']
 
-        reachMaxIter = self.gameIter == self.maxGameIter
+        reachMaxIter = self.gameIter >= self.maxGameIter
 
         exit = (reachMaxIter and self.isTrain) or not self.isTrain
         exit = exit and (is_finished or stuck)

@@ -20,7 +20,7 @@ class HumanAgent(Agent):
 
     def act(self, obs, reward, is_finished, info):
         self.state = (obs, reward, is_finished, info)
-        # sleep(0.1)
+        self.logAction()
         # print('acting {}'.format(self.action))
         # sleep(1.0/30)
         return self.action
@@ -29,15 +29,7 @@ class HumanAgent(Agent):
         if self.state is None:
             return False
         (obs, reward, is_finished, info) = self.state
-        total_score = info["distance"]
-        stop = total_score > 32000
-        if is_finished or stop:
-            # self.listener.join()
-            if stop:
-                print('exiting the game cuz I no longer wanna play ...')
-            return True
-        else:
-            return False
+        return is_finished
 
     def handle(self, e):
         # self.listener.join()

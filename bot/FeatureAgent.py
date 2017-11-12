@@ -1,14 +1,23 @@
 import numpy as np
 from nn.q_model import *
+from QLearnAgent import *
 
 class FeatureAgent(QLearnAgent):
     def __init__(self, options, env):
         super(FeatureAgent, self).__init__(options, env)
-        featureSize = Window.getFrameSize() * self.algo.windowsize
+        featureSize = Window.getFrameSize() * self.windowsize
         featureSize += 4
         featureSize += len(Action.NAME) + 1
-        self.model = QModel(featureSize)
-        self.model.initialize_model()
+        self.model = QModel(
+            stateVectorLength=featureSize, 
+            optimizer='adam', 
+            lr=0.01, 
+            decay_step=1000, 
+            decay_rate=0, 
+            regularization=0.1
+        )
+        self.model.initialize_model(options.model_dir)
+        self.algo.set_model(self.model)
     # obs: 13 x 16 numpy array (y, x). (0, 0) is the top left corner
 
     # info dict
