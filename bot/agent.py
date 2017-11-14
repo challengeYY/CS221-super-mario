@@ -38,4 +38,4 @@ class Agent:
     def handle(self, e): pass
 
     def logAction(self):
-        print('acting {}'.format(Action.toString(self.action)))
+        print('acting {}'.format(','.join(Action.names(self.action))))

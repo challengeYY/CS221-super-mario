@@ -19,9 +19,8 @@ class QLearningAlgorithm():
         self.model = model
 
     # Return the Q function associated with the weights and features
-    def getQ(self, state, action):
+    def getQ(self, window, action):
         score = 0
-        window = self.statecache[-self.windowsize:-1] + [state]
         x = self.featureExtractor(window, action)
         score, = self.model.inference([x])
         return score
@@ -36,7 +35,8 @@ class QLearningAlgorithm():
         elif len(self.statecache) < self.windowsize:
             actionName = 'Right'
         else:
-            actionName = max((self.getQ(state, action), action) for action in self.actions(state))[1]
+            actionName = max((self.getQ(self.statecache[-self.windowsize:-1] + [state], a), a) \
+                    for a in self.actions(state))[1]
         return Action.act(actionName)
 
     # Call this function to get the step size to update the weights.
@@ -56,10 +56,11 @@ class QLearningAlgorithm():
             X = []
             Y = []
             for i in range(1, self.batchsize+1):
-                window = self.statecache[-self.windowsize-i-1:-i]
+                window = self.statecache[-self.windowsize-i:-i]
+                if len(window) < self.windowsize: continue
                 X.append(self.featureExtractor(window, action))
                 reward = get_reward(self.statecache[-i])
-                Vopt = max([self.getQ(self.statecache[-self.windowsize:], a) for a in self.actions(newState)])
+                Vopt = max([self.getQ(window, a) for a in self.actions(newState)])
                 target = (reward + gamma * Vopt)
                 Y.append(target)
             self.model.update_weights(X, Y)

@@ -49,11 +49,11 @@ class Action:
         return len(Action.NAME) * [0]
 
     @staticmethod
-    def toString(action):
-        n = ""
+    def names(action):
+        l = []
         for i, act in enumerate(action):
             if act == 1:
-                n += Action.NAME[i] + ' '
-        if n == "":
-            n = Action.NO_ACTION
-        return n
+                l.append(Action.NAME[i])
+        if len(l)==0:
+            l.append(Action.NO_ACTION)
+        return l

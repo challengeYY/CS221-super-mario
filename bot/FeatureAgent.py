@@ -31,6 +31,8 @@ class FeatureAgent(QLearnAgent):
     # time = info['time'] # # The current time left
     # ignore = info['ignore'] # Will be added with a value of True if the game is stuck and is terminated early
     def featureExtractor(self, window, action):
+        if len(window) != self.windowsize:
+            raise Exception('{} != windowsize {}'.format(len(window), self.windowsize))
         feature = []
         last_state = window[-1]
         info = get_info(last_state)
@@ -38,7 +40,6 @@ class FeatureAgent(QLearnAgent):
         feature.append(info['coins'])
         feature.append(info['player_status'])
         feature.append(info['time'])
-        actions = [0] * len(Action.NAME)
         if action == Action.NO_ACTION:
             feature += Action.empty() + [1]
         else:
