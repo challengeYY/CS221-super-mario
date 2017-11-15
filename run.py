@@ -10,7 +10,7 @@ def main():
     parser.add_argument('--model_dir', dest='model_dir', action='store', default='./model/',
             help='Directory to store weights')
     parser.add_argument('--player', dest='player', action='store', default='human',
-            help='Specify the player, valid option: human, baseline')
+            help='Specify the player, valid option: human, baseline, feature')
     parser.add_argument('--no-gui', dest='render', action='store_false',default=True,
         help='Do not render visualization of the game')
     parser.add_argument('--maxGameIter', dest='maxGameIter', nargs='?', default=1, type=int,
