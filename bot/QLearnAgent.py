@@ -46,8 +46,8 @@ class QLearnAgent(Agent):
         # caching states
         self.algo.statecache.append(self.state)
         names = Action.names(self.action)
-        assert(len(names)==1)
-        self.algo.actioncache.append(names[0])
+        # names can be a list
+        self.algo.actioncache.append(names)
 
         self.logAction()
         return self.action
