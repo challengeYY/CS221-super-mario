@@ -62,8 +62,9 @@ class QLearningAlgorithm():
 
             X = []
             Y = []
+            # TODO: Fix this sliding window.
             for i in range(1, self.batchsize + 1):
-                window = self.statecache[-self.windowsize - i:-i]
+                window = self.statecache[-self.windowsize - i + 1:]
                 if len(window) < self.windowsize: continue
                 X.append(self.featureExtractor(window, action))
                 reward = get_reward(self.statecache[-i])
