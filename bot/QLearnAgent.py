@@ -11,7 +11,7 @@ class QLearnAgent(Agent):
         self.action = [0, 0, 0, 0, 0, 0]
         self.state = None
         self.maxGameIter = options.maxGameIter
-        self.windowsize = 3
+        self.windowsize = 1
         self.gameIter = 0
         self.isTrain = options.isTrain
         self.env = env
@@ -21,7 +21,7 @@ class QLearnAgent(Agent):
             discount=1,
             featureExtractor=self.featureExtractor,
             windowsize=self.windowsize,
-            explorationProb=0.7
+            explorationProb=0.5
         )
 
     def get_possible_actions(self, state):

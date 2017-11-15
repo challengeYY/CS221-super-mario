@@ -45,6 +45,7 @@ def main():
             if options.player == 'human':
                 sleep(0.1)
             obs, reward, is_finished, info = env.step(action)
+            print "reward: {}".format(reward)
             if options.render:
                 env.render()
             action = agent.act(obs, reward, is_finished, info)
