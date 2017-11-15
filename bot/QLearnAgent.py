@@ -6,9 +6,10 @@ from enum import *
 from util import *
 from QLearnAlgo import *
 
+
 class QLearnAgent(Agent):
     def __init__(self, options, env):
-        self.action = [0,0,0,0,0,0]
+        self.action = [0, 0, 0, 0, 0, 0]
         self.state = None
         self.maxGameIter = options.maxGameIter
         self.windowsize = 3
@@ -16,16 +17,16 @@ class QLearnAgent(Agent):
         self.isTrain = options.isTrain
         self.env = env
         self.algo = QLearningAlgorithm(
-                options = options,
-                actions = self.get_possible_actions,
-                discount = 1,
-                featureExtractor = self.featureExtractor,
-                windowsize = self.windowsize,
-                explorationProb = 0.3
-                )
+            options=options,
+            actions=self.get_possible_actions,
+            discount=1,
+            featureExtractor=self.featureExtractor,
+            windowsize=self.windowsize,
+            explorationProb=0.7
+        )
 
     def get_possible_actions(self, state):
-        return ['Left', 'Right', 'A', 'B', ['Right', 'A']] + [Action.NO_ACTION]
+        return ['Left', 'Right', 'A', ['Right', 'A'], ['Right', 'B'], ['Right', 'A', 'B']]
 
     def featureExtractor(self, window, action):
         raise Exception('Abstract method! should be overridden')
@@ -46,8 +47,7 @@ class QLearnAgent(Agent):
         # caching states
         self.algo.statecache.append(self.state)
         names = Action.names(self.action)
-        assert(len(names)==1)
-        self.algo.actioncache.append(names[0])
+        self.algo.actioncache.append(names)
 
         self.logAction()
         return self.action

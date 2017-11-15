@@ -15,7 +15,7 @@ class FeatureAgent(QLearnAgent):
             lr=0.01, 
             decay_step=1000, 
             decay_rate=0, 
-            regularization=0.01
+            regularization=0.0
         )
         self.model.initialize_model(options.model_dir)
         self.algo.set_model(self.model)

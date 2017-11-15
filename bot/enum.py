@@ -39,6 +39,8 @@ class Action:
         action = Action.empty() 
         if type(name) is list: # a list of names
             for n in name:
+                if n == Action.NO_ACTION:
+                    continue
                 action[Action.index(n)] = 1
         elif name != Action.NO_ACTION: # a single name
             action[Action.index(name)] = 1
