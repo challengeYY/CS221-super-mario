@@ -129,6 +129,8 @@ class QModel(object):
                                                                   'input_state_action']: state_and_actions,
                                                               self.placeholders['target_q']: target_Q})
         self.train_writer.add_summary(summary, global_step)
+        if not global_step % 1000:
+            self.save_model('./model')
         return predicted_Q
 
     def save_model(self, output_path):
@@ -142,14 +144,14 @@ class QModel(object):
         if not os.path.exists(model_path):
             os.makedirs(model_path)
         logging.info("Saving model parameters...")
-        self.saver.save(self.session, model_path + "model.weights")
+        self.saver.save(self.sess, model_path + "model.weights")
 
     def initialize_model(self, model_dir):
         ckpt = tf.train.get_checkpoint_state(model_dir)
         v2_path = ckpt.model_checkpoint_path + ".index" if ckpt else ""
         if ckpt and (tf.gfile.Exists(ckpt.model_checkpoint_path) or tf.gfile.Exists(v2_path)):
             logging.info("Reading model parameters from %s" % ckpt.model_checkpoint_path)
-            self.saver.restore(self.session, ckpt.model_checkpoint_path)
+            self.saver.restore(self.sess, ckpt.model_checkpoint_path)
         else:
             logging.info("Created model with fresh parameters.")
             self.sess.run(tf.global_variables_initializer())

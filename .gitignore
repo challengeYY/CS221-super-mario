@@ -3,6 +3,10 @@
 *.py~
 .DS_Store
 
+# Tensorflow
+/model/
+/train/
+
 # Setuptools distribution and build folders.
 /dist/
 /build
