@@ -61,32 +61,39 @@ class QModel(object):
         Construct the tf graph.
         """
         with tf.variable_scope("QModel", initializer=tf.uniform_unit_scaling_initializer(1.0)):
-            w_1 = vs.get_variable('W1', [self.stateVectorLength, self.stateVectorLength], dtype=tf.float32,
+            w_1 = vs.get_variable('W1', [self.stateVectorLength, 512], dtype=tf.float32,
                                   initializer=tf.contrib.layers.xavier_initializer()
                                   )
-            b_1 = vs.get_variable('B1', [self.stateVectorLength], dtype=tf.float32,
+            b_1 = vs.get_variable('B1', [512], dtype=tf.float32,
                                   initializer=tf.constant_initializer(0))
-            h_1 = tf.matmul(self.placeholders['input_state_action'], w_1) + b_1
-            w_2 = vs.get_variable('W2', [self.stateVectorLength, self.stateVectorLength], dtype=tf.float32,
+            h_1 = tf.nn.sigmoid(tf.matmul(self.placeholders['input_state_action'], w_1) + b_1)
+            w_2 = vs.get_variable('W2', [512, 256], dtype=tf.float32,
                                   initializer=tf.contrib.layers.xavier_initializer())
-            b_2 = vs.get_variable('B2', [self.stateVectorLength], dtype=tf.float32,
+            b_2 = vs.get_variable('B2', [256], dtype=tf.float32,
                                   initializer=tf.constant_initializer(0))
-            h_2 = tf.matmul(h_1, w_2) + b_2
-            w_3 = vs.get_variable('W3', [self.stateVectorLength, 1], dtype=tf.float32,
+            h_2 = tf.nn.relu(tf.matmul(h_1, w_2) + b_2)
+            w_3 = vs.get_variable('W3', [256, 64], dtype=tf.float32,
                                   initializer=tf.contrib.layers.xavier_initializer())
-            b_3 = vs.get_variable('B3', [1], dtype=tf.float32,
+            b_3 = vs.get_variable('B3', [64], dtype=tf.float32,
                                   initializer=tf.constant_initializer(0))
-            tf.add_to_collection(tf.GraphKeys.WEIGHTS,w_1)
-            tf.add_to_collection(tf.GraphKeys.WEIGHTS,w_2)
-            tf.add_to_collection(tf.GraphKeys.WEIGHTS,w_3)
-            self.predicted_Q = tf.matmul(h_2, w_3) + b_3
+            h_3 = tf.nn.relu(tf.matmul(h_2, w_3) + b_3)
+            w_4 = vs.get_variable('W4', [64, 1], dtype=tf.float32,
+                                  initializer=tf.contrib.layers.xavier_initializer())
+            b_4 = vs.get_variable('B4', [1], dtype=tf.float32,
+                                  initializer=tf.constant_initializer(0))
+            self.predicted_Q = tf.nn.relu(tf.matmul(h_3, w_4) + b_4)
+
+            tf.add_to_collection(tf.GraphKeys.WEIGHTS, w_1)
+            tf.add_to_collection(tf.GraphKeys.WEIGHTS, w_2)
+            tf.add_to_collection(tf.GraphKeys.WEIGHTS, w_3)
+            tf.add_to_collection(tf.GraphKeys.WEIGHTS, w_4)
 
             self.setup_loss()
 
     def setup_tensorboard(self):
         self.merged_summary = tf.summary.merge_all()
         self.train_writer = tf.summary.FileWriter('./train',
-                                             self.sess.graph)
+                                                  self.sess.graph)
 
     def setup_loss(self):
         """
@@ -117,9 +124,10 @@ class QModel(object):
         :param target_Q: A list of r + /gamma V.
         """
         predicted_Q, summary, global_step = self.sess.run([self.train_op, self.merged_summary, self.global_step],
-                                    feed_dict={
-                                        self.placeholders['input_state_action']: state_and_actions,
-                                        self.placeholders['target_q']: target_Q})
+                                                          feed_dict={
+                                                              self.placeholders[
+                                                                  'input_state_action']: state_and_actions,
+                                                              self.placeholders['target_q']: target_Q})
         self.train_writer.add_summary(summary, global_step)
         return predicted_Q
 
