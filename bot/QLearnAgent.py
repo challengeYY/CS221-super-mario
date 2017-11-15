@@ -6,7 +6,6 @@ from enum import *
 from util import *
 from QLearnAlgo import *
 
-
 class QLearnAgent(Agent):
     def __init__(self, options, env):
         self.action = [0, 0, 0, 0, 0, 0]
@@ -47,6 +46,7 @@ class QLearnAgent(Agent):
         # caching states
         self.algo.statecache.append(self.state)
         names = Action.names(self.action)
+        # names can be a list
         self.algo.actioncache.append(names)
 
         self.logAction()
