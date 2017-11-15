@@ -61,42 +61,36 @@ class QModel(object):
         Construct the tf graph.
         """
         with tf.variable_scope("QModel", initializer=tf.uniform_unit_scaling_initializer(1.0)):
-            w_1 = vs.get_variable('W1', [self.stateVectorLength, 1024], dtype=tf.float32,
-                                  initializer=tf.contrib.layers.xavier_initializer()
-                                  )
-            b_1 = vs.get_variable('B1', [1024], dtype=tf.float32,
-                                  initializer=tf.constant_initializer(0))
-            h_1 = tf.nn.sigmoid(tf.matmul(self.placeholders['input_state_action'], w_1) + b_1)
-            w_2 = vs.get_variable('W2', [1024, 512], dtype=tf.float32,
-                                  initializer=tf.contrib.layers.xavier_initializer())
-            b_2 = vs.get_variable('B2', [512], dtype=tf.float32,
-                                  initializer=tf.constant_initializer(0))
-            h_2 = tf.nn.relu(tf.matmul(h_1, w_2) + b_2)
-            w_3 = vs.get_variable('W3', [512, 256], dtype=tf.float32,
-                                  initializer=tf.contrib.layers.xavier_initializer())
-            b_3 = vs.get_variable('B3', [256], dtype=tf.float32,
-                                  initializer=tf.constant_initializer(0))
-            h_3 = tf.nn.relu(tf.matmul(h_2, w_3) + b_3)
-            w_4 = vs.get_variable('W4', [256, 128], dtype=tf.float32,
-                                  initializer=tf.contrib.layers.xavier_initializer())
-            b_4 = vs.get_variable('B4', [128], dtype=tf.float32,
-                                  initializer=tf.constant_initializer(0))
-            h_4 = tf.nn.relu(tf.matmul(h_3, w_4) + b_4)
-            w_5 = vs.get_variable('W5', [128, 64], dtype=tf.float32,
-                                  initializer=tf.contrib.layers.xavier_initializer())
-            b_5 = vs.get_variable('B5', [64], dtype=tf.float32,
-                                  initializer=tf.constant_initializer(0))
-            h_5 = tf.nn.relu(tf.matmul(h_4, w_5) + b_5)
-            w_6 = vs.get_variable('W6', [64, 1], dtype=tf.float32,
-                                  initializer=tf.contrib.layers.xavier_initializer())
-            b_6 = vs.get_variable('B6', [1], dtype=tf.float32,
-                                  initializer=tf.constant_initializer(0))
-            self.predicted_Q = tf.nn.relu(tf.matmul(h_5, w_6) + b_6)
-
-            tf.add_to_collection(tf.GraphKeys.WEIGHTS, w_1)
-            tf.add_to_collection(tf.GraphKeys.WEIGHTS, w_2)
-            tf.add_to_collection(tf.GraphKeys.WEIGHTS, w_3)
-            tf.add_to_collection(tf.GraphKeys.WEIGHTS, w_4)
+            h_1 = tf.layers.dense(self.placeholders['input_state_action'], 512, activation=tf.nn.sigmoid,
+                                  kernel_regularizer=tf.contrib.layers.l2_regularizer(self.regularization),
+                                  kernel_initializer=tf.contrib.layers.xavier_initializer())
+            h_2 = tf.layers.dense(h_1, 256, activation=tf.nn.relu,
+                                  kernel_regularizer=tf.contrib.layers.l2_regularizer(self.regularization),
+                                  kernel_initializer=tf.contrib.layers.xavier_initializer())
+            h_3 = tf.layers.dense(h_2, 256, activation=tf.nn.relu,
+                                  kernel_regularizer=tf.contrib.layers.l2_regularizer(self.regularization),
+                                  kernel_initializer=tf.contrib.layers.xavier_initializer())
+            h_4 = tf.layers.dense(h_3, 256, activation=tf.nn.relu,
+                                  kernel_regularizer=tf.contrib.layers.l2_regularizer(self.regularization),
+                                  kernel_initializer=tf.contrib.layers.xavier_initializer())
+            h_5 = tf.layers.dense(h_4, 128, activation=tf.nn.relu,
+                                  kernel_regularizer=tf.contrib.layers.l2_regularizer(self.regularization),
+                                  kernel_initializer=tf.contrib.layers.xavier_initializer())
+            h_6 = tf.layers.dense(h_5, 128, activation=tf.nn.relu,
+                                  kernel_regularizer=tf.contrib.layers.l2_regularizer(self.regularization),
+                                  kernel_initializer=tf.contrib.layers.xavier_initializer())
+            h_7 = tf.layers.dense(h_6, 64, activation=tf.nn.relu,
+                                  kernel_regularizer=tf.contrib.layers.l2_regularizer(self.regularization),
+                                  kernel_initializer=tf.contrib.layers.xavier_initializer())
+            h_8 = tf.layers.dense(h_7, 64, activation=tf.nn.relu,
+                                  kernel_regularizer=tf.contrib.layers.l2_regularizer(self.regularization),
+                                  kernel_initializer=tf.contrib.layers.xavier_initializer())
+            h_9 = tf.layers.dense(h_8, 32, activation=tf.nn.relu,
+                                  kernel_regularizer=tf.contrib.layers.l2_regularizer(self.regularization),
+                                  kernel_initializer=tf.contrib.layers.xavier_initializer())
+            self.predicted_Q = tf.layers.dense(h_9, 1, activation=tf.nn.relu,
+                                               kernel_regularizer=tf.contrib.layers.l2_regularizer(self.regularization),
+                                               kernel_initializer=tf.contrib.layers.xavier_initializer())
 
             self.setup_loss()
 
@@ -111,7 +105,7 @@ class QModel(object):
         """
         with vs.variable_scope("loss"):
             raw_loss = tf.losses.mean_squared_error(self.placeholders['target_q'], self.predicted_Q)
-            reg_loss = tf.contrib.layers.apply_regularization(tf.contrib.layers.l2_regularizer(self.regularization))
+            reg_loss = tf.losses.get_regularization_loss()
             self.loss = raw_loss + reg_loss
             tf.summary.scalar('Total Loss', self.loss)
             tf.summary.scalar('Q Loss', raw_loss)

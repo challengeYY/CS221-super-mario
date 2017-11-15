@@ -1,14 +1,19 @@
 import random
 from util import *
 
+
 class QLearningAlgorithm():
     def __init__(self, options, actions, discount, featureExtractor, windowsize, explorationProb=0.2):
         self.actions = actions
         self.discount = discount
         self.featureExtractor = featureExtractor
         self.explorationProb = explorationProb
+<<<<<<< HEAD
         # self.batchsize = 10 # number of frames to retrain the model
         self.batchsize = 1
+=======
+        self.batchsize = 10  # number of frames to retrain the model
+>>>>>>> 8bd2f8cc2ddc0378e447a226242face70d20c249
         self.windowsize = windowsize  # number of frames to look back in a state
         self.statecache = []
         self.actioncache = []
@@ -36,8 +41,14 @@ class QLearningAlgorithm():
         elif len(self.statecache) < self.windowsize:
             actionName = 'Right'
         else:
-            actionName = max((self.getQ(self.statecache[-self.windowsize:-1] + [state], a), a) \
-                    for a in self.actions(state))[1]
+            if self.windowsize > 1:
+                q, actionName = max((self.getQ(self.statecache[-self.windowsize + 1:] + [state], a), a) \
+                                for a in self.actions(state))
+                print "Q: {} len(statecache): {}".format(q,len(self.statecache))
+            else:
+                q, actionName = max((self.getQ([state], a), a) \
+                                    for a in self.actions(state))
+                print "Q: {} len(statecache): {}".format(q,len(self.statecache))
         return Action.act(actionName)
 
     # Call this function to get the step size to update the weights.
