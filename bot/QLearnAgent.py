@@ -25,10 +25,10 @@ class QLearnAgent(Agent):
                 )
 
     def get_possible_actions(self, state):
-        return ['Left', 'Right', 'A', 'B'] + [Action.NO_ACTION]
+        return ['Left', 'Right', 'A', 'B', ['Right', 'A']] + [Action.NO_ACTION]
 
     def featureExtractor(self, window, action):
-        raise Exception('Abstract method! should be overritten')
+        raise Exception('Abstract method! should be overridden')
 
     def initAction(self):
         return self.action
