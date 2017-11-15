@@ -7,7 +7,7 @@ from bot import *
 def main():
     usage = "Usage: run [options]"
     parser = argparse.ArgumentParser()
-    parser.add_argument('--model_dir', dest='model_dir', action='store', default='model/',
+    parser.add_argument('--model_dir', dest='model_dir', action='store', default='./model/',
             help='Directory to store weights')
     parser.add_argument('--player', dest='player', action='store', default='human',
             help='Specify the player, valid option: human, baseline, feature')
