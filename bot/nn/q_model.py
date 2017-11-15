@@ -54,6 +54,7 @@ class QModel(object):
 
         self.saver = tf.train.Saver(max_to_keep=50)
         self.sess = tf.Session()
+        self.setup_tensorboard()
 
     def setup_model(self):
         """
@@ -82,6 +83,11 @@ class QModel(object):
 
             self.setup_loss()
 
+    def setup_tensorboard(self):
+        self.merged_summary = tf.summary.merge_all()
+        self.train_writer = tf.summary.FileWriter('./train',
+                                             self.sess.graph)
+
     def setup_loss(self):
         """
         Set up your loss computation here
@@ -90,6 +96,9 @@ class QModel(object):
             raw_loss = tf.losses.mean_squared_error(self.placeholders['target_q'], self.predicted_Q)
             reg_loss = tf.contrib.layers.apply_regularization(tf.contrib.layers.l2_regularizer(self.regularization))
             self.loss = raw_loss + reg_loss
+            tf.summary.scalar('Total Loss', self.loss)
+            tf.summary.scalar('Q Loss', raw_loss)
+            tf.summary.scalar('Regularization Loss', reg_loss)
 
     def inference(self, state_and_actions):
         """
@@ -107,11 +116,11 @@ class QModel(object):
         :param state_and_actions: A list of state and actions. Each state action pair is represented by a list of float32.
         :param target_Q: A list of r + /gamma V.
         """
-        predicted_Q, loss = self.sess.run([self.train_op, loss],
+        predicted_Q, summary, global_step = self.sess.run([self.train_op, self.merged_summary, self.global_step],
                                     feed_dict={
                                         self.placeholders['input_state_action']: state_and_actions,
                                         self.placeholders['target_q']: target_Q})
-        print ('loss: {}', loss)
+        self.train_writer.add_summary(summary, global_step)
         return predicted_Q
 
     def save_model(self, output_path):
