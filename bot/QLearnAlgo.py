@@ -7,7 +7,8 @@ class QLearningAlgorithm():
         self.discount = discount
         self.featureExtractor = featureExtractor
         self.explorationProb = explorationProb
-        self.batchsize = 10 # number of frames to retrain the model
+        # self.batchsize = 10 # number of frames to retrain the model
+        self.batchsize = 1
         self.windowsize = windowsize  # number of frames to look back in a state
         self.statecache = []
         self.actioncache = []
@@ -45,7 +46,7 @@ class QLearningAlgorithm():
     # Note that if s is a terminal state, then s' will be None.  Remember to check for this.
     # You should update the weights using self.getStepSize(); use
     # self.getQ() to compute the current estimate of the parameters.
-    def incorporateFeedback(self, state, action, newState):
+    def incorporateFeedback(self, action, newState):
         # BEGIN_YOUR_CODE (our solution is 12 lines of code, but don't worry if you deviate from this)
         self.batchcounter += 1
 
@@ -55,12 +56,19 @@ class QLearningAlgorithm():
 
             X = []
             Y = []
-            for i in range(1, self.batchsize+1):
-                window = self.statecache[-self.windowsize-i:-i]
-                if len(window) < self.windowsize: continue
-                X.append(self.featureExtractor(window, action))
-                reward = get_reward(self.statecache[-i])
-                Vopt = max([self.getQ(window, a) for a in self.actions(newState)])
-                target = (reward + gamma * Vopt)
-                Y.append(target)
+            # for i in range(1, self.batchsize+1):
+            #     window = self.statecache[-self.windowsize-i:-i]
+            #     if len(window) < self.windowsize: continue
+            #     X.append(self.featureExtractor(window, action))
+            #     reward = get_reward(self.statecache[-i])
+            #     Vopt = max([self.getQ(window, a) for a in self.actions(newState)])
+            #     target = (reward + gamma * Vopt)
+            #     Y.append(target)
+            # try batchsize = 1
+            window = self.statecache[-self.windowsize:]
+            X.append(self.featureExtractor(window, action))
+            reward = get_reward(newState)
+            Vopt = max([self.getQ(window, a) for a in self.actions(newState)])
+            target = (reward + gamma * Vopt)
+            Y.append(target)
             self.model.update_weights(X, Y)

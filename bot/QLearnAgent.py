@@ -39,7 +39,7 @@ class QLearnAgent(Agent):
         if len(self.algo.statecache) >= 1:
             prevState = self.algo.statecache[-1]
             prevAction = self.algo.actioncache[-1]
-            self.algo.incorporateFeedback(prevState, prevAction, self.state)
+            self.algo.incorporateFeedback(prevAction, self.state)
 
         self.action = self.algo.getAction(self.state)
 
