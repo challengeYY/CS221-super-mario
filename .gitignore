@@ -2,6 +2,7 @@
 *.pyc
 *.py~
 .DS_Store
+nohup.out
 
 # Tensorflow
 /model/

@@ -8,12 +8,8 @@ class QLearningAlgorithm():
         self.discount = discount
         self.featureExtractor = featureExtractor
         self.explorationProb = explorationProb
-<<<<<<< HEAD
         # self.batchsize = 10 # number of frames to retrain the model
         self.batchsize = 1
-=======
-        self.batchsize = 10  # number of frames to retrain the model
->>>>>>> 8bd2f8cc2ddc0378e447a226242face70d20c249
         self.windowsize = windowsize  # number of frames to look back in a state
         self.statecache = []
         self.actioncache = []
