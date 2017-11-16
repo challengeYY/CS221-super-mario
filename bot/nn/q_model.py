@@ -61,7 +61,7 @@ class QModel(object):
         Construct the tf graph.
         """
         with tf.variable_scope("QModel", initializer=tf.uniform_unit_scaling_initializer(1.0)):
-            h_1 = tf.layers.dense(self.placeholders['input_state_action'], 512, activation=tf.nn.sigmoid,
+            h_1 = tf.layers.dense(self.placeholders['input_state_action'], 256, activation=tf.nn.sigmoid,
                                   kernel_regularizer=tf.contrib.layers.l2_regularizer(self.regularization),
                                   kernel_initializer=tf.contrib.layers.xavier_initializer())
             h_2 = tf.layers.dense(h_1, 256, activation=tf.nn.sigmoid,
