@@ -21,7 +21,7 @@ class QLearnAgent(Agent):
             discount=1,
             featureExtractor=self.featureExtractor,
             windowsize=self.windowsize,
-            explorationProb=0.5
+            explorationProb=0.0
         )
 
     def get_possible_actions(self, state):

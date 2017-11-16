@@ -8,12 +8,8 @@ class QLearningAlgorithm():
         self.discount = discount
         self.featureExtractor = featureExtractor
         self.explorationProb = explorationProb
-<<<<<<< HEAD
         # self.batchsize = 10 # number of frames to retrain the model
         self.batchsize = 1
-=======
-        self.batchsize = 10  # number of frames to retrain the model
->>>>>>> 8bd2f8cc2ddc0378e447a226242face70d20c249
         self.windowsize = windowsize  # number of frames to look back in a state
         self.statecache = []
         self.actioncache = []
@@ -79,7 +75,10 @@ class QLearningAlgorithm():
             window = self.statecache[-self.windowsize:]
             X.append(self.featureExtractor(window, action))
             reward = get_reward(newState)
-            Vopt = max([self.getQ(window, a) for a in self.actions(newState)])
+            if get_info(newState)['life'] == 0:
+                reward = -10000
+            Vopt = max([self.getQ([newState], a) for a in self.actions(newState)])
             target = (reward + gamma * Vopt)
             Y.append(target)
+            print 'target: {}'.format(target)
             self.model.update_weights(X, Y)

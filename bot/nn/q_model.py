@@ -64,31 +64,31 @@ class QModel(object):
             h_1 = tf.layers.dense(self.placeholders['input_state_action'], 512, activation=tf.nn.sigmoid,
                                   kernel_regularizer=tf.contrib.layers.l2_regularizer(self.regularization),
                                   kernel_initializer=tf.contrib.layers.xavier_initializer())
-            h_2 = tf.layers.dense(h_1, 256, activation=tf.nn.relu,
+            h_2 = tf.layers.dense(h_1, 256, activation=tf.nn.sigmoid,
                                   kernel_regularizer=tf.contrib.layers.l2_regularizer(self.regularization),
                                   kernel_initializer=tf.contrib.layers.xavier_initializer())
-            h_3 = tf.layers.dense(h_2, 256, activation=tf.nn.relu,
+            h_3 = tf.layers.dense(h_2, 256, activation=tf.nn.sigmoid,
                                   kernel_regularizer=tf.contrib.layers.l2_regularizer(self.regularization),
                                   kernel_initializer=tf.contrib.layers.xavier_initializer())
-            h_4 = tf.layers.dense(h_3, 256, activation=tf.nn.relu,
+            h_4 = tf.layers.dense(h_3, 256, activation=tf.nn.sigmoid,
                                   kernel_regularizer=tf.contrib.layers.l2_regularizer(self.regularization),
                                   kernel_initializer=tf.contrib.layers.xavier_initializer())
-            h_5 = tf.layers.dense(h_4, 128, activation=tf.nn.relu,
+            h_5 = tf.layers.dense(h_4, 128, activation=tf.nn.sigmoid,
                                   kernel_regularizer=tf.contrib.layers.l2_regularizer(self.regularization),
                                   kernel_initializer=tf.contrib.layers.xavier_initializer())
-            h_6 = tf.layers.dense(h_5, 128, activation=tf.nn.relu,
+            h_6 = tf.layers.dense(h_5, 128, activation=tf.nn.sigmoid,
                                   kernel_regularizer=tf.contrib.layers.l2_regularizer(self.regularization),
                                   kernel_initializer=tf.contrib.layers.xavier_initializer())
-            h_7 = tf.layers.dense(h_6, 64, activation=tf.nn.relu,
+            h_7 = tf.layers.dense(h_6, 64, activation=tf.nn.sigmoid,
                                   kernel_regularizer=tf.contrib.layers.l2_regularizer(self.regularization),
                                   kernel_initializer=tf.contrib.layers.xavier_initializer())
-            h_8 = tf.layers.dense(h_7, 64, activation=tf.nn.relu,
+            h_8 = tf.layers.dense(h_7, 64, activation=tf.nn.sigmoid,
                                   kernel_regularizer=tf.contrib.layers.l2_regularizer(self.regularization),
                                   kernel_initializer=tf.contrib.layers.xavier_initializer())
-            h_9 = tf.layers.dense(h_8, 32, activation=tf.nn.relu,
+            h_9 = tf.layers.dense(h_8, 32, activation=tf.nn.sigmoid,
                                   kernel_regularizer=tf.contrib.layers.l2_regularizer(self.regularization),
                                   kernel_initializer=tf.contrib.layers.xavier_initializer())
-            self.predicted_Q = tf.layers.dense(h_9, 1, activation=tf.nn.relu,
+            self.predicted_Q = tf.layers.dense(h_9, 1, activation=None,
                                                kernel_regularizer=tf.contrib.layers.l2_regularizer(self.regularization),
                                                kernel_initializer=tf.contrib.layers.xavier_initializer())
 
@@ -133,7 +133,7 @@ class QModel(object):
                                                                   'input_state_action']: state_and_actions,
                                                               self.placeholders['target_q']: target_Q})
         self.train_writer.add_summary(summary, global_step)
-        if not global_step % 1000:
+        if not global_step % 10000:
             self.save_model('./model')
         return predicted_Q
 
