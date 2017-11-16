@@ -15,17 +15,14 @@ class QLearnAgent(Agent):
         self.gameIter = 0
         self.isTrain = options.isTrain
         self.env = env
+        self.actions = ['Left', 'Right', 'A', ['Right', 'A'], ['Right', 'B'], ['Right', 'A', 'B']]
         self.algo = QLearningAlgorithm(
             options=options,
-            actions=self.get_possible_actions,
+            actions=self.actions,
             discount=1,
             featureExtractor=self.featureExtractor,
             windowsize=self.windowsize,
-            explorationProb=0.0
         )
-
-    def get_possible_actions(self, state):
-        return ['Left', 'Right', 'A', ['Right', 'A'], ['Right', 'B'], ['Right', 'A', 'B']]
 
     def featureExtractor(self, window, action):
         raise Exception('Abstract method! should be overridden')
@@ -37,17 +34,16 @@ class QLearnAgent(Agent):
         self.state = (obs, reward, is_finished, info)
 
         if len(self.algo.statecache) >= 1:
-            prevState = self.algo.statecache[-1]
+            # prevState = self.algo.statecache[-1]
             prevAction = self.algo.actioncache[-1]
             self.algo.incorporateFeedback(prevAction, self.state)
 
-        self.action = self.algo.getAction(self.state)
+        self.action, action_idx = self.algo.getAction(self.state)
 
         # caching states
         self.algo.statecache.append(self.state)
-        names = Action.names(self.action)
         # names can be a list
-        self.algo.actioncache.append(names)
+        self.algo.actioncache.append(action_idx)
 
         self.logAction()
         return self.action

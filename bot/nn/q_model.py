@@ -25,7 +25,8 @@ def get_optimizer(opt):
 
 
 class QModel(object):
-    def __init__(self, stateVectorLength, optimizer='adam', lr=0.01, decay_step=1000, decay_rate=0, regularization=0):
+    def __init__(self, state_size, num_actions, optimizer='adam', lr=0.01, decay_step=1000, decay_rate=0,
+                 regularization=0):
         """
         Initializes your System
         :param stateVectorLength: Length of vector used to represent state and action.
@@ -34,23 +35,19 @@ class QModel(object):
         self.regularization = regularization
 
         # ==== set up placeholder tokens ========
-        self.stateVectorLength = stateVectorLength
+        self.stateSize = state_size
+        self.numActions = num_actions
         self.placeholders = {}
-        self.placeholders['input_state_action'] = tf.placeholder(tf.float32, shape=(None, stateVectorLength))
-        self.placeholders['target_q'] = tf.placeholder(tf.float32, shape=(None, 1))
+        self.placeholders['input_state'] = tf.placeholder(tf.float32, shape=(None, self.stateSize))
+        self.placeholders['target_q'] = tf.placeholder(tf.float32, shape=(None))
 
         # ==== assemble pieces ====
         self.setup_model()
+        self.setup_loss()
+        self.setup_train(lr, decay_step, decay_rate, optimizer)
 
         # ==== set up training/updating procedure ====
         # implement learning rate annealing
-        global_step = tf.Variable(0, trainable=False)
-        self.lr = tf.train.exponential_decay(lr, global_step, decay_step, decay_rate,
-                                             staircase=True)
-
-        self.global_step = global_step
-        optimizer = get_optimizer(optimizer)(self.lr)
-        self.train_op = optimizer.minimize(self.loss, global_step=global_step)
 
         self.saver = tf.train.Saver(max_to_keep=50)
         self.sess = tf.Session()
@@ -61,7 +58,7 @@ class QModel(object):
         Construct the tf graph.
         """
         with tf.variable_scope("QModel", initializer=tf.uniform_unit_scaling_initializer(1.0)):
-            h_1 = tf.layers.dense(self.placeholders['input_state_action'], 256, activation=tf.nn.sigmoid,
+            h_1 = tf.layers.dense(self.placeholders['input_state'], 256, activation=tf.nn.sigmoid,
                                   kernel_regularizer=tf.contrib.layers.l2_regularizer(self.regularization),
                                   kernel_initializer=tf.contrib.layers.xavier_initializer())
             h_2 = tf.layers.dense(h_1, 256, activation=tf.nn.sigmoid,
@@ -88,11 +85,10 @@ class QModel(object):
             h_9 = tf.layers.dense(h_8, 32, activation=tf.nn.sigmoid,
                                   kernel_regularizer=tf.contrib.layers.l2_regularizer(self.regularization),
                                   kernel_initializer=tf.contrib.layers.xavier_initializer())
-            self.predicted_Q = tf.layers.dense(h_9, 1, activation=None,
+            self.predicted_Q = tf.layers.dense(h_9, self.numActions, activation=None,
                                                kernel_regularizer=tf.contrib.layers.l2_regularizer(self.regularization),
                                                kernel_initializer=tf.contrib.layers.xavier_initializer())
-
-            self.setup_loss()
+            self.soft_max_selection = tf.nn.softmax(self.predicted_Q)
 
     def setup_tensorboard(self):
         self.merged_summary = tf.summary.merge_all()
@@ -104,38 +100,67 @@ class QModel(object):
         Set up your loss computation here
         """
         with vs.variable_scope("loss"):
-            raw_loss = tf.losses.mean_squared_error(self.placeholders['target_q'], self.predicted_Q)
+            self.losses = []
             reg_loss = tf.losses.get_regularization_loss()
-            self.loss = raw_loss + reg_loss
-            tf.summary.scalar('Total Loss', self.loss)
-            tf.summary.scalar('Q Loss', raw_loss)
             tf.summary.scalar('Regularization Loss', reg_loss)
+            tf.summary.scalar('Total Loss', tf.losses.get_total_loss())
+            for i in range(self.numActions):
+                raw_loss = tf.losses.mean_squared_error(self.placeholders['target_q'], self.predicted_Q[:,i])
+                self.losses.append(raw_loss + reg_loss)
+                tf.summary.scalar('Q Loss of action {}'.format(i), raw_loss)
 
-    def inference(self, state_and_actions):
+    def setup_train(self, lr, decay_step, decay_rate, optimizer):
+        """
+        Setup train ops.
+        """
+        with vs.variable_scope("train"):
+            self.train_ops = []
+            global_step = tf.Variable(0, trainable=False)
+            self.lr = tf.train.exponential_decay(lr, global_step, decay_step, decay_rate,
+                                                 staircase=True)
+
+            self.global_step = global_step
+            optimizer = get_optimizer(optimizer)(self.lr)
+            for loss in self.losses:
+                self.train_ops.append(optimizer.minimize(loss, global_step=global_step))
+
+    def inference_Q(self, state):
         """
         Run 1 epoch. Train on training examples, evaluate on validation set.
-        :param state_and_actions: A list of state and actions. Each state action pair is represented by a list of float32.
-        :return Predicted Q value of given state and action.
+        :param state: A state which is represented by a list of float32.
+        :return Predicted Q value for all actions of given state.
         """
         predicted_Q = self.sess.run(self.predicted_Q,
-                                    feed_dict={self.placeholders['input_state_action']: state_and_actions})
+                                    feed_dict={self.placeholders['input_state']: state})
         return predicted_Q
 
-    def update_weights(self, state_and_actions, target_Q):
+    def inference_Prob(self, state):
+        """
+        Run 1 epoch. Train on training examples, evaluate on validation set.
+        :param state: A state which is represented by a list of float32.
+        :return softmax of Q for all actions of given state.
+        """
+        prob = self.sess.run(self.soft_max_selection,
+                                    feed_dict={self.placeholders['input_state']: state})
+        return prob
+
+    def update_weights(self, states, actions, target_Qs):
         """
         Update one step on the given state_and_actions batch.
-        :param state_and_actions: A list of state and actions. Each state action pair is represented by a list of float32.
+        :param state: A list of states which is represented by a list of float32.
+        :param actions: A list of indices of action which is represented by a int.
         :param target_Q: A list of r + /gamma V.
         """
-        predicted_Q, summary, global_step = self.sess.run([self.train_op, self.merged_summary, self.global_step],
-                                                          feed_dict={
-                                                              self.placeholders[
-                                                                  'input_state_action']: state_and_actions,
-                                                              self.placeholders['target_q']: target_Q})
-        self.train_writer.add_summary(summary, global_step)
-        if not global_step % 10000:
-            self.save_model('./model')
-        return predicted_Q
+        losses = []
+        for state, action, target_Q in zip(states, actions, target_Qs):
+            _, loss, summary, global_step = self.sess.run(
+                [self.train_ops[action], self.losses[action], self.merged_summary, self.global_step],
+                feed_dict={self.placeholders['input_state']: [state], self.placeholders['target_q']: [target_Q]})
+            losses.append(loss)
+            self.train_writer.add_summary(summary, global_step)
+            if not global_step % 10000:
+                self.save_model('./model')
+        return sum(losses) / len(losses)
 
     def save_model(self, output_path):
         """

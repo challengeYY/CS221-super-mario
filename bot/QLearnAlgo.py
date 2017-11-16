@@ -1,13 +1,13 @@
-import random
+from numpy import random
+import operator
 from util import *
 
 
 class QLearningAlgorithm():
-    def __init__(self, options, actions, discount, featureExtractor, windowsize, explorationProb=0.2):
+    def __init__(self, options, actions, discount, featureExtractor, windowsize):
         self.actions = actions
         self.discount = discount
         self.featureExtractor = featureExtractor
-        self.explorationProb = explorationProb
         # self.batchsize = 10 # number of frames to retrain the model
         self.batchsize = 1
         self.windowsize = windowsize  # number of frames to look back in a state
@@ -21,31 +21,41 @@ class QLearningAlgorithm():
         self.model = model
 
     # Return the Q function associated with the weights and features
-    def getQ(self, window, action):
-        score = 0
-        x = self.featureExtractor(window, action)
-        score, = self.model.inference([x])
-        return score
+    def getQ(self, window):
+        x = self.featureExtractor(window)
+        scores = self.model.inference_Q([x])[0]
+        return scores
+
+    def getProb(self, window):
+        x = self.featureExtractor(window)
+        scores = self.model.inference_Prob([x])[0]
+        return scores
 
     # This algorithm will produce an action given a state.
     # Here we use the epsilon-greedy algorithm: with probability
     # |explorationProb|, take a random action.
     def getAction(self, state):
         rand = random.random()
-        if rand < self.explorationProb and self.options.isTrain:
-            actionName = random.choice(self.actions(state))
+        actionIdx = 0
+        if self.options.isTrain:
+            if self.windowsize > 1:
+                actionIdx = random.choice(range(len(self.actions)),
+                                          p=self.getProb(self.statecache[-self.windowsize + 1:] + [state]))
+                print "randomly select action id: {}".format(actionIdx)
+            else:
+                actionIdx = random.choice(range(len(self.actions)), p=self.getProb([state]))
+                print "randomly select action id: {}".format(actionIdx)
         elif len(self.statecache) < self.windowsize:
-            actionName = 'Right'
+            actionIdx = self.actions.index('Right')
         else:
             if self.windowsize > 1:
-                q, actionName = max((self.getQ(self.statecache[-self.windowsize + 1:] + [state], a), a) \
-                                for a in self.actions(state))
-                print "Q: {} len(statecache): {}".format(q,len(self.statecache))
+                actionIdx, q = max(enumerate(self.getQ(self.statecache[-self.windowsize + 1:] + [state])),
+                                   key=operator.itemgetter(1))
+                print "Q: {} best action id: {}".format(q, actionIdx)
             else:
-                q, actionName = max((self.getQ([state], a), a) \
-                                    for a in self.actions(state))
-                print "Q: {} len(statecache): {}".format(q,len(self.statecache))
-        return Action.act(actionName)
+                actionIdx, q = max(enumerate(self.getQ([state])), key=operator.itemgetter(1))
+                print "Q: {} best action id: {}".format(q, actionIdx)
+        return Action.act(self.actions[actionIdx]), actionIdx
 
     # Call this function to get the step size to update the weights.
 
@@ -53,7 +63,7 @@ class QLearningAlgorithm():
     # Note that if s is a terminal state, then s' will be None.  Remember to check for this.
     # You should update the weights using self.getStepSize(); use
     # self.getQ() to compute the current estimate of the parameters.
-    def incorporateFeedback(self, action, newState):
+    def incorporateFeedback(self, action_idx, newState):
         # BEGIN_YOUR_CODE (our solution is 12 lines of code, but don't worry if you deviate from this)
         self.batchcounter += 1
 
@@ -61,7 +71,8 @@ class QLearningAlgorithm():
             self.batchcounter = 0
             gamma = self.discount
 
-            X = []
+            states = []
+            actions = []
             Y = []
             # for i in range(1, self.batchsize+1):
             #     window = self.statecache[-self.windowsize-i:-i]
@@ -71,14 +82,16 @@ class QLearningAlgorithm():
             #     Vopt = max([self.getQ(window, a) for a in self.actions(newState)])
             #     target = (reward + gamma * Vopt)
             #     Y.append(target)
+
             # try batchsize = 1
             window = self.statecache[-self.windowsize:]
-            X.append(self.featureExtractor(window, action))
+            states.append(self.featureExtractor(window))
+            actions.append(action_idx)
             reward = get_reward(newState)
             if get_info(newState)['life'] == 0:
                 reward = -10000
-            Vopt = max([self.getQ([newState], a) for a in self.actions(newState)])
+            Vopt = max(self.getQ([newState]))
             target = (reward + gamma * Vopt)
             Y.append(target)
             print 'target: {}'.format(target)
-            self.model.update_weights(X, Y)
+            self.model.update_weights(states, actions, Y)

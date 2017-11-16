@@ -7,10 +7,10 @@ class FeatureAgent(QLearnAgent):
         super(FeatureAgent, self).__init__(options, env)
         featureSize = Window.getFrameSize() * self.windowsize
         featureSize += 4
-        featureSize += len(Action.NAME) + 1
         print('featureSize', featureSize)
         self.model = QModel(
-            stateVectorLength=featureSize, 
+            state_size=featureSize,
+            num_actions=len(self.actions),
             optimizer='adam', 
             lr=0.01, 
             decay_step=1000, 
@@ -30,7 +30,7 @@ class FeatureAgent(QLearnAgent):
     # score = info['score'] # The current score
     # time = info['time'] # # The current time left
     # ignore = info['ignore'] # Will be added with a value of True if the game is stuck and is terminated early
-    def featureExtractor(self, window, action):
+    def featureExtractor(self, window):
         if len(window) != self.windowsize:
             raise Exception('{} != windowsize {}'.format(len(window), self.windowsize))
         feature = []
@@ -40,10 +40,6 @@ class FeatureAgent(QLearnAgent):
         feature.append(info['coins'])
         feature.append(info['player_status'])
         feature.append(info['time'])
-        if action == Action.NO_ACTION:
-            feature += Action.empty() + [1]
-        else:
-            feature += Action.act(action) + [0]
         feature = np.array(feature)
         for state in window:
             obs = get_obs(state)
