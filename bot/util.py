@@ -17,7 +17,7 @@ def get_tile_from_mario(obs, step_x, step_y):
     focusy = marioy - step_y
     if out_of_frame(focusx, focusy):
         return None
-    return obs[focusx, focusy]
+    return obs[focusy, focusx]
 
 def get_reward(state):
     obs, reward, is_finished, info = state

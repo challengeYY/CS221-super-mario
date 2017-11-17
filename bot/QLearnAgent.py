@@ -45,7 +45,7 @@ class QLearnAgent(Agent):
         # names can be a list
         self.algo.actioncache.append(action_idx)
 
-        self.logAction()
+        self.log(self.action, reward)
         return self.action
 
     def exit(self):
