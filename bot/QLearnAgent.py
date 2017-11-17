@@ -15,7 +15,8 @@ class QLearnAgent(Agent):
         self.gameIter = 0
         self.isTrain = options.isTrain
         self.env = env
-        self.actions = ['Left', 'Right', 'A', ['Right', 'A'], ['Right', 'B'], ['Right', 'A', 'B']]
+        self.actions = ['Left', 'Right', 'A', ['Right', 'A'], ['Right', 'B'], ['Right', 'A', 'B'], ['Left', 'A'],
+                        ['Left', 'B'], ['Left', 'A', 'B']]
         self.algo = QLearningAlgorithm(
             options=options,
             actions=self.actions,
