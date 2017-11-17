@@ -95,10 +95,10 @@ class QLearningAlgorithm():
             infos.append(info)
             actions.append(action_idx)
             reward = get_reward(newState)
-            if get_info(newState)['life'] == 0:
-                reward = -100000
             Vopt = max(self.getQ([newState]))
             target = (reward + gamma * Vopt)
+            if get_info(newState)['life'] == 0:
+                target = -1000
             Y.append(target)
             print 'target: {}'.format(target)
             self.model.update_weights(tiles,infos, actions, Y)
