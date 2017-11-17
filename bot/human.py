@@ -20,9 +20,10 @@ class HumanAgent(Agent):
 
     def act(self, obs, reward, is_finished, info):
         self.state = (obs, reward, is_finished, info)
-        self.logAction()
+        self.log(self.action, reward)
         # print('acting {}'.format(self.action))
         # sleep(1.0/30)
+        sleep(0.1)
         return self.action
 
     def exit(self):
