@@ -23,6 +23,7 @@ class HumanAgent(Agent):
         self.logAction()
         # print('acting {}'.format(self.action))
         # sleep(1.0/30)
+                sleep(0.1)
         return self.action
 
     def exit(self):
