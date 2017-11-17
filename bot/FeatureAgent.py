@@ -18,7 +18,7 @@ class FeatureAgent(QLearnAgent):
             optimizer='adam',
             lr=0.01,
             decay_step=1000,
-            decay_rate=0,
+            decay_rate=1,
             regularization=0.01
         )
         self.model.initialize_model(options.model_dir)

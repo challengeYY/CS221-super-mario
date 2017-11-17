@@ -26,7 +26,7 @@ def get_optimizer(opt):
 
 class QModel(object):
     def __init__(self, info_size, num_actions, tile_row, tile_col, window_size,optimizer='adam', lr=0.01, decay_step=1000,
-                 decay_rate=0, regularization=0):
+                 decay_rate=1, regularization=0):
         """
         Initializes your System
         :param stateVectorLength: Length of vector used to represent state and action.
