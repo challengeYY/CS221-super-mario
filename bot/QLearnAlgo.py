@@ -22,13 +22,25 @@ class QLearningAlgorithm():
 
     # Return the Q function associated with the weights and features
     def getQ(self, window):
-        x = self.featureExtractor(window)
-        scores = self.model.inference_Q([x])[0]
+        if self.model.conv:
+            tile, info = self.featureExtractor(window)
+            scores = self.model.inference_Q([info], tile=[tile])[0]
+        else:
+            info = self.featureExtractor(window)
+            if info is None:
+                return [0]
+            scores = self.model.inference_Q([info])[0]
         return scores
 
     def getProb(self, window):
-        x = self.featureExtractor(window)
-        scores = self.model.inference_Prob([x])[0]
+        if self.model.conv:
+            tile, info = self.featureExtractor(window)
+            scores = self.model.inference_Prob([info], tile=[tile])[0]
+        else:
+            info = self.featureExtractor(window)
+            if info is None:
+                return [1.0/len(self.actions)] * len(self.actions)
+            scores = self.model.inference_Prob([info])[0]
         return scores
 
     # This algorithm will produce an action given a state.
@@ -75,7 +87,8 @@ class QLearningAlgorithm():
             self.batchcounter = 0
             gamma = self.discount
 
-            states = []
+            tiles = []
+            infos = []
             actions = []
             Y = []
             # for i in range(1, self.batchsize+1):
@@ -89,13 +102,22 @@ class QLearningAlgorithm():
 
             # try batchsize = 1
             window = self.statecache[-self.windowsize:]
-            states.append(self.featureExtractor(window))
+            if self.model.conv:
+                tile, info = self.featureExtractor(window)
+                tiles.append(tile)
+            else:
+                info = self.featureExtractor(window)
+            # when Mario dies and is out of the picture, manual feature extractor
+            # returns None
+            if info is None:
+                return
+            infos.append(info)
             actions.append(action_idx)
             reward = get_reward(newState)
             if get_info(newState)['life'] == 0:
-                reward = -10000
+                reward = -100000
             Vopt = max(self.getQ([newState]))
             target = (reward + gamma * Vopt)
             Y.append(target)
             print 'target: {}'.format(target)
-            self.model.update_weights(states, actions, Y)
+            self.model.update_weights(infos, actions, Y, tiles=tiles)

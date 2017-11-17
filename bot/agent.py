@@ -37,5 +37,5 @@ class Agent:
     @abstractmethod
     def handle(self, e): pass
 
-    def logAction(self):
-        print('acting {}'.format(','.join(Action.names(self.action))))
+    def log(self, action, reward):
+        print('acting {} reward={}'.format(','.join(Action.names(action)), reward))

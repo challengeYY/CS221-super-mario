@@ -11,7 +11,7 @@ class QLearnAgent(Agent):
         self.action = [0, 0, 0, 0, 0, 0]
         self.state = None
         self.maxGameIter = options.maxGameIter
-        self.windowsize = 1
+        self.windowsize = options.windowsize
         self.gameIter = 0
         self.isTrain = options.isTrain
         self.env = env
@@ -38,14 +38,16 @@ class QLearnAgent(Agent):
             prevAction = self.algo.actioncache[-1]
             self.algo.incorporateFeedback(prevAction, self.state)
 
-        self.action, action_idx = self.algo.getAction(self.state)
+        if is_finished:
+            self.action = Action.empty()
+        else:
+            self.action, action_idx = self.algo.getAction(self.state)
+            # caching states
+            self.algo.statecache.append(self.state)
+            # names can be a list
+            self.algo.actioncache.append(action_idx)
 
-        # caching states
-        self.algo.statecache.append(self.state)
-        # names can be a list
-        self.algo.actioncache.append(action_idx)
-
-        self.logAction()
+        self.log(self.action, reward)
         return self.action
 
     def exit(self):

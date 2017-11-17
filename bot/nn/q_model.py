@@ -25,20 +25,25 @@ def get_optimizer(opt):
 
 
 class QModel(object):
-    def __init__(self, state_size, num_actions, optimizer='adam', lr=0.01, decay_step=1000, decay_rate=0,
-                 regularization=0):
+    def __init__(self, info_size, num_actions, tile_row, tile_col, window_size,optimizer='adam', lr=0.01, decay_step=1000,
+                 decay_rate=1, regularization=0, conv=True):
         """
         Initializes your System
         :param stateVectorLength: Length of vector used to represent state and action.
         :param optimizer: Name of optimizer.
         """
         self.regularization = regularization
+        self.conv = conv
 
         # ==== set up placeholder tokens ========
-        self.stateSize = state_size
+        self.info_size = info_size
         self.numActions = num_actions
+        self.tile_row = tile_row
+        self.tile_col = tile_col
+        self.window_size= window_size
         self.placeholders = {}
-        self.placeholders['input_state'] = tf.placeholder(tf.float32, shape=(None, self.stateSize))
+        self.placeholders['tile'] = tf.placeholder(tf.float32, shape=(None, self.tile_row, self.tile_col, window_size))
+        self.placeholders['info'] = tf.placeholder(tf.float32, shape=(None, self.info_size))
         self.placeholders['target_q'] = tf.placeholder(tf.float32, shape=(None,))
         self.placeholders['action'] = tf.placeholder(tf.int32, shape=(None,))
 
@@ -59,34 +64,37 @@ class QModel(object):
         Construct the tf graph.
         """
         with tf.variable_scope("QModel", initializer=tf.uniform_unit_scaling_initializer(1.0)):
-            h_1 = tf.layers.dense(self.placeholders['input_state'], 256, activation=tf.nn.sigmoid,
+            if self.conv:
+                conv_1 = tf.layers.conv2d(self.placeholders['tile'], 8, 3, activation=tf.nn.relu,
+                                          kernel_regularizer=tf.contrib.layers.l2_regularizer(self.regularization),
+                                          kernel_initializer=tf.contrib.layers.xavier_initializer(),
+                                          bias_initializer=tf.constant_initializer(0))
+                pool_1 = tf.layers.max_pooling2d(conv_1, 2, 2)
+                conv_2 = tf.layers.conv2d(pool_1, 8, 3, activation=tf.nn.relu,
+                                          kernel_regularizer=tf.contrib.layers.l2_regularizer(self.regularization),
+                                          kernel_initializer=tf.contrib.layers.xavier_initializer(),
+                                          bias_initializer=tf.constant_initializer(0))
+                pool_2 = tf.contrib.layers.flatten(tf.layers.max_pooling2d(conv_2, 2, 2))
+                h_1 = tf.layers.dense(tf.concat([pool_2, self.placeholders['info']], 1), 256, activation=tf.nn.relu,
+                                      kernel_regularizer=tf.contrib.layers.l2_regularizer(self.regularization),
+                                      kernel_initializer=tf.contrib.layers.xavier_initializer())
+            else:
+                h_1 = tf.layers.dense(self.placeholders['info'], 256, activation=tf.nn.relu,
+                                      kernel_regularizer=tf.contrib.layers.l2_regularizer(self.regularization),
+                                      kernel_initializer=tf.contrib.layers.xavier_initializer())
+            h_2 = tf.layers.dense(h_1, 256, activation=tf.nn.relu,
                                   kernel_regularizer=tf.contrib.layers.l2_regularizer(self.regularization),
                                   kernel_initializer=tf.contrib.layers.xavier_initializer())
-            h_2 = tf.layers.dense(h_1, 256, activation=tf.nn.sigmoid,
+            h_3 = tf.layers.dense(h_2, 128, activation=tf.nn.relu,
                                   kernel_regularizer=tf.contrib.layers.l2_regularizer(self.regularization),
                                   kernel_initializer=tf.contrib.layers.xavier_initializer())
-            h_3 = tf.layers.dense(h_2, 256, activation=tf.nn.sigmoid,
+            h_4 = tf.layers.dense(h_3, 64, activation=tf.nn.relu,
                                   kernel_regularizer=tf.contrib.layers.l2_regularizer(self.regularization),
                                   kernel_initializer=tf.contrib.layers.xavier_initializer())
-            h_4 = tf.layers.dense(h_3, 256, activation=tf.nn.sigmoid,
+            h_5 = tf.layers.dense(h_4, 32, activation=tf.nn.relu,
                                   kernel_regularizer=tf.contrib.layers.l2_regularizer(self.regularization),
                                   kernel_initializer=tf.contrib.layers.xavier_initializer())
-            h_5 = tf.layers.dense(h_4, 128, activation=tf.nn.sigmoid,
-                                  kernel_regularizer=tf.contrib.layers.l2_regularizer(self.regularization),
-                                  kernel_initializer=tf.contrib.layers.xavier_initializer())
-            h_6 = tf.layers.dense(h_5, 128, activation=tf.nn.sigmoid,
-                                  kernel_regularizer=tf.contrib.layers.l2_regularizer(self.regularization),
-                                  kernel_initializer=tf.contrib.layers.xavier_initializer())
-            h_7 = tf.layers.dense(h_6, 64, activation=tf.nn.sigmoid,
-                                  kernel_regularizer=tf.contrib.layers.l2_regularizer(self.regularization),
-                                  kernel_initializer=tf.contrib.layers.xavier_initializer())
-            h_8 = tf.layers.dense(h_7, 64, activation=tf.nn.sigmoid,
-                                  kernel_regularizer=tf.contrib.layers.l2_regularizer(self.regularization),
-                                  kernel_initializer=tf.contrib.layers.xavier_initializer())
-            h_9 = tf.layers.dense(h_8, 32, activation=tf.nn.sigmoid,
-                                  kernel_regularizer=tf.contrib.layers.l2_regularizer(self.regularization),
-                                  kernel_initializer=tf.contrib.layers.xavier_initializer())
-            self.predicted_Q = tf.layers.dense(h_9, self.numActions, activation=None,
+            self.predicted_Q = tf.layers.dense(h_5, self.numActions, activation=None,
                                                kernel_regularizer=tf.contrib.layers.l2_regularizer(self.regularization),
                                                kernel_initializer=tf.contrib.layers.xavier_initializer())
             self.soft_max_selection = tf.nn.softmax(self.predicted_Q)
@@ -117,7 +125,8 @@ class QModel(object):
         Setup train ops.
         """
         with vs.variable_scope("train"):
-            global_step = tf.get_variable('global_step', shape=[],dtype=tf.int64, initializer=tf.constant_initializer(0),
+            global_step = tf.get_variable('global_step', shape=[], dtype=tf.int64,
+                                          initializer=tf.constant_initializer(0),
                                           trainable=False)
             self.lr = tf.train.exponential_decay(lr, global_step, decay_step, decay_rate,
                                                  staircase=True)
@@ -126,38 +135,49 @@ class QModel(object):
             optimizer = get_optimizer(optimizer_name)(self.lr)
             self.train_op = optimizer.minimize(self.loss, global_step=global_step)
 
-    def inference_Q(self, state):
+    def inference_Q(self, info, tile=None):
         """
         Run 1 epoch. Train on training examples, evaluate on validation set.
         :param state: A state which is represented by a list of float32.
         :return Predicted Q value for all actions of given state.
         """
-        predicted_Q = self.sess.run(self.predicted_Q,
-                                    feed_dict={self.placeholders['input_state']: state})
+        feed_dict = {self.placeholders['info']: info}
+        if self.conv:
+            feed_dict[self.placeholders['tile']] = tile
+        predicted_Q = self.sess.run(self.predicted_Q, feed_dict=feed_dict)
+
         return predicted_Q
 
-    def inference_Prob(self, state):
+    def inference_Prob(self, info, tile=None):
         """
         Run 1 epoch. Train on training examples, evaluate on validation set.
         :param state: A state which is represented by a list of float32.
         :return softmax of Q for all actions of given state.
         """
-        prob = self.sess.run(self.soft_max_selection,
-                             feed_dict={self.placeholders['input_state']: state})
+        feed_dict = {self.placeholders['info']: info}
+        if self.conv:
+            feed_dict[self.placeholders['tile']] = tile
+        prob = self.sess.run(self.soft_max_selection, feed_dict=feed_dict)
         return prob
 
-    def update_weights(self, states, actions, target_Qs):
+    def update_weights(self, infos, actions, target_Qs, tiles=None):
         """
         Update one step on the given state_and_actions batch.
-        :param state: A list of states which is represented by a list of float32.
+        :param tiles: A list of tiles which is represented by a 2-D array of float32 (width, height).
+        :param infos: A list of states which is represented by a list of float32.
         :param actions: A list of indices of action which is represented by a int.
         :param target_Q: A list of r + /gamma V.
         """
+        feed_dict = {self.placeholders['info']: infos,
+                     self.placeholders['target_q']: target_Qs,
+                     self.placeholders['action']: actions}
+        if self.conv:
+            feed_dict[self.placeholders['tile']] = tiles
+
         losses = []
         _, loss, summary, global_step = self.sess.run(
             [self.train_op, self.loss, self.merged_summary, self.global_step],
-            feed_dict={self.placeholders['input_state']: states, self.placeholders['target_q']: target_Qs,
-                       self.placeholders['action']: actions})
+            feed_dict=feed_dict)
         losses.append(loss)
         self.train_writer.add_summary(summary, global_step)
         if not global_step % 5000:

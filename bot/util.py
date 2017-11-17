@@ -8,6 +8,10 @@ def out_of_frame(x,y):
 # where positive step_x and step_y indicates right and up
 # obs is 13 x 16 (y, x) with (0,0) on top left corner
 def get_tile_from_mario(obs, step_x, step_y):
+    focusy, focusx = get_coord_from_mario(obs, step_x, step_y)
+    return obs[focusy, focusx]
+
+def get_coord_from_mario(obs, step_x, step_y):
     ys, xs = np.where(obs == Tile.MARIO)
     if len(xs) == 0:
         return None
@@ -17,7 +21,7 @@ def get_tile_from_mario(obs, step_x, step_y):
     focusy = marioy - step_y
     if out_of_frame(focusx, focusy):
         return None
-    return obs[focusx, focusy]
+    return focusy, focusx
 
 def get_reward(state):
     obs, reward, is_finished, info = state
