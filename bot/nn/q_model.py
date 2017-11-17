@@ -68,12 +68,11 @@ class QModel(object):
                                       kernel_initializer=tf.contrib.layers.xavier_initializer(),
                                       bias_initializer=tf.constant_initializer(0))
             pool_1 = tf.layers.max_pooling2d(conv_1, 2, 2)
-            conv_2 = tf.layers.conv2d(pool_1, 8, 3, activation=tf.nn.relu,
+            conv_2 = tf.contrib.layers.flatten(tf.layers.conv2d(pool_1, 4, 3, activation=tf.nn.relu,
                                       kernel_regularizer=tf.contrib.layers.l2_regularizer(self.regularization),
                                       kernel_initializer=tf.contrib.layers.xavier_initializer(),
-                                      bias_initializer=tf.constant_initializer(0))
-            pool_2 = tf.contrib.layers.flatten(tf.layers.max_pooling2d(conv_2, 2, 2))
-            h_1 = tf.layers.dense(tf.concat([pool_2, self.placeholders['info']], 1), 256, activation=tf.nn.relu,
+                                      bias_initializer=tf.constant_initializer(0)))
+            h_1 = tf.layers.dense(tf.concat([conv_2, self.placeholders['info']], 1), 256, activation=tf.nn.relu,
                                   kernel_regularizer=tf.contrib.layers.l2_regularizer(self.regularization),
                                   kernel_initializer=tf.contrib.layers.xavier_initializer())
             h_2 = tf.layers.dense(h_1, 256, activation=tf.nn.relu,
@@ -168,7 +167,7 @@ class QModel(object):
                        self.placeholders['action']: actions})
         losses.append(loss)
         self.train_writer.add_summary(summary, global_step)
-        if not global_step % 5000:
+        if not global_step % 2000:
             self.save_model('./model')
         return sum(losses) / len(losses)
 
@@ -195,5 +194,3 @@ class QModel(object):
             logging.info("Created model with fresh parameters.")
             self.sess.run(tf.global_variables_initializer())
             logging.info('Num params: %d' % sum(v.get_shape().num_elements() for v in tf.trainable_variables()))
-        init = tf.global_variables_initializer()
-        self.sess.run(init)
