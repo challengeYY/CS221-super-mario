@@ -22,13 +22,13 @@ class QLearningAlgorithm():
 
     # Return the Q function associated with the weights and features
     def getQ(self, window):
-        x = self.featureExtractor(window)
-        scores = self.model.inference_Q([x])[0]
+        tile, info = self.featureExtractor(window)
+        scores = self.model.inference_Q([tile], [info])[0]
         return scores
 
     def getProb(self, window):
-        x = self.featureExtractor(window)
-        scores = self.model.inference_Prob([x])[0]
+        tile, info = self.featureExtractor(window)
+        scores = self.model.inference_Prob([tile], [info])[0]
         return scores
 
     # This algorithm will produce an action given a state.
@@ -75,7 +75,8 @@ class QLearningAlgorithm():
             self.batchcounter = 0
             gamma = self.discount
 
-            states = []
+            tiles = []
+            infos = []
             actions = []
             Y = []
             # for i in range(1, self.batchsize+1):
@@ -89,13 +90,15 @@ class QLearningAlgorithm():
 
             # try batchsize = 1
             window = self.statecache[-self.windowsize:]
-            states.append(self.featureExtractor(window))
+            tile, info = self.featureExtractor(window)
+            tiles.append(tile)
+            infos.append(info)
             actions.append(action_idx)
             reward = get_reward(newState)
             if get_info(newState)['life'] == 0:
-                reward = -10000
+                reward = -100000
             Vopt = max(self.getQ([newState]))
             target = (reward + gamma * Vopt)
             Y.append(target)
             print 'target: {}'.format(target)
-            self.model.update_weights(states, actions, Y)
+            self.model.update_weights(tiles,infos, actions, Y)
