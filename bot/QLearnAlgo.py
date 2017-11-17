@@ -39,12 +39,16 @@ class QLearningAlgorithm():
         actionIdx = 0
         if self.options.isTrain:
             if self.windowsize > 1:
+                probs = self.getProb(self.statecache[-self.windowsize + 1:] + [state])
                 actionIdx = random.choice(range(len(self.actions)),
-                                          p=self.getProb(self.statecache[-self.windowsize + 1:] + [state]))
+                                          p=probs)
                 print "randomly select action id: {}".format(actionIdx)
+                print "Probs: {}".format(probs)
             else:
-                actionIdx = random.choice(range(len(self.actions)), p=self.getProb([state]))
+                probs = self.getProb([state])
+                actionIdx = random.choice(range(len(self.actions)), p=probs)
                 print "randomly select action id: {}".format(actionIdx)
+                print "Probs: {}".format(probs)
         elif len(self.statecache) < self.windowsize:
             actionIdx = self.actions.index('Right')
         else:

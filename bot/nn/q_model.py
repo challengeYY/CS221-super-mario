@@ -39,7 +39,8 @@ class QModel(object):
         self.numActions = num_actions
         self.placeholders = {}
         self.placeholders['input_state'] = tf.placeholder(tf.float32, shape=(None, self.stateSize))
-        self.placeholders['target_q'] = tf.placeholder(tf.float32, shape=(None))
+        self.placeholders['target_q'] = tf.placeholder(tf.float32, shape=(None,))
+        self.placeholders['action'] = tf.placeholder(tf.int32, shape=(None,))
 
         # ==== assemble pieces ====
         self.setup_model()
@@ -100,29 +101,30 @@ class QModel(object):
         Set up your loss computation here
         """
         with vs.variable_scope("loss"):
-            self.losses = []
+            indices = self.placeholders['action']
+            depth = self.numActions
+            action_masks = tf.cast(tf.one_hot(indices, depth), tf.bool)
             reg_loss = tf.losses.get_regularization_loss()
             tf.summary.scalar('Regularization Loss', reg_loss)
-            tf.summary.scalar('Total Loss', tf.losses.get_total_loss())
-            for i in range(self.numActions):
-                raw_loss = tf.losses.mean_squared_error(self.placeholders['target_q'], self.predicted_Q[:,i])
-                self.losses.append(raw_loss + reg_loss)
-                tf.summary.scalar('Q Loss of action {}'.format(i), raw_loss)
+            raw_loss = tf.losses.mean_squared_error(self.placeholders['target_q'],
+                                                    tf.boolean_mask(self.predicted_Q, action_masks))
+            self.loss = raw_loss + reg_loss
+            tf.summary.scalar('Q Loss', raw_loss)
+            tf.summary.scalar('Total Loss', self.loss)
 
-    def setup_train(self, lr, decay_step, decay_rate, optimizer):
+    def setup_train(self, lr, decay_step, decay_rate, optimizer_name):
         """
         Setup train ops.
         """
         with vs.variable_scope("train"):
-            self.train_ops = []
-            global_step = tf.Variable(0, trainable=False)
+            global_step = tf.get_variable('global_step', shape=[],dtype=tf.int64, initializer=tf.constant_initializer(0),
+                                          trainable=False)
             self.lr = tf.train.exponential_decay(lr, global_step, decay_step, decay_rate,
                                                  staircase=True)
 
             self.global_step = global_step
-            optimizer = get_optimizer(optimizer)(self.lr)
-            for loss in self.losses:
-                self.train_ops.append(optimizer.minimize(loss, global_step=global_step))
+            optimizer = get_optimizer(optimizer_name)(self.lr)
+            self.train_op = optimizer.minimize(self.loss, global_step=global_step)
 
     def inference_Q(self, state):
         """
@@ -141,7 +143,7 @@ class QModel(object):
         :return softmax of Q for all actions of given state.
         """
         prob = self.sess.run(self.soft_max_selection,
-                                    feed_dict={self.placeholders['input_state']: state})
+                             feed_dict={self.placeholders['input_state']: state})
         return prob
 
     def update_weights(self, states, actions, target_Qs):
@@ -152,14 +154,14 @@ class QModel(object):
         :param target_Q: A list of r + /gamma V.
         """
         losses = []
-        for state, action, target_Q in zip(states, actions, target_Qs):
-            _, loss, summary, global_step = self.sess.run(
-                [self.train_ops[action], self.losses[action], self.merged_summary, self.global_step],
-                feed_dict={self.placeholders['input_state']: [state], self.placeholders['target_q']: [target_Q]})
-            losses.append(loss)
-            self.train_writer.add_summary(summary, global_step)
-            if not global_step % 10000:
-                self.save_model('./model')
+        _, loss, summary, global_step = self.sess.run(
+            [self.train_op, self.loss, self.merged_summary, self.global_step],
+            feed_dict={self.placeholders['input_state']: states, self.placeholders['target_q']: target_Qs,
+                       self.placeholders['action']: actions})
+        losses.append(loss)
+        self.train_writer.add_summary(summary, global_step)
+        if not global_step % 5000:
+            self.save_model('./model')
         return sum(losses) / len(losses)
 
     def save_model(self, output_path):
@@ -173,7 +175,7 @@ class QModel(object):
         if not os.path.exists(model_path):
             os.makedirs(model_path)
         logging.info("Saving model parameters...")
-        self.saver.save(self.sess, model_path + "model.weights")
+        self.saver.save(self.sess, model_path + "model.weights", global_step=self.global_step)
 
     def initialize_model(self, model_dir):
         ckpt = tf.train.get_checkpoint_state(model_dir)

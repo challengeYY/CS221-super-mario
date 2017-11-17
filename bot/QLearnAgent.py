@@ -33,7 +33,7 @@ class QLearnAgent(Agent):
     def act(self, obs, reward, is_finished, info):
         self.state = (obs, reward, is_finished, info)
 
-        if len(self.algo.statecache) >= 1:
+        if len(self.algo.statecache) >= 1 and self.isTrain:
             # prevState = self.algo.statecache[-1]
             prevAction = self.algo.actioncache[-1]
             self.algo.incorporateFeedback(prevAction, self.state)
@@ -65,7 +65,7 @@ class QLearnAgent(Agent):
 
         reachMaxIter = self.gameIter >= self.maxGameIter
 
-        exit = (reachMaxIter and self.isTrain) or not self.isTrain
+        exit = reachMaxIter
         exit = exit and (is_finished or stuck)
         return exit
 
