@@ -34,3 +34,18 @@ def is_finished(state):
 def get_info(state):
     obs, reward, is_finished, info = state
     return info
+
+# get mario's velocity from state1 to state2
+def get_velocity(state1, state2):
+    # 13 x 16 numpy array
+    obs1 = get_obs(state1)
+    obs2 = get_obs(state2)
+    min_diff = float('inf')
+    for v in range(3):
+        shifted_obs1 = np.roll(obs1, v, axis=1)
+        shifted_obs1[:,:v] = obs2[:,:v]
+        diff = np.sum(np.abs(shifted_obs1 - obs2))
+        if diff < min_diff:
+            min_diff = diff
+            min_v = v
+    return v
