@@ -26,13 +26,14 @@ def get_optimizer(opt):
 
 class QModel(object):
     def __init__(self, info_size, num_actions, tile_row, tile_col, window_size,optimizer='adam', lr=0.01, decay_step=1000,
-                 decay_rate=1, regularization=0):
+                 decay_rate=1, regularization=0, conv=True):
         """
         Initializes your System
         :param stateVectorLength: Length of vector used to represent state and action.
         :param optimizer: Name of optimizer.
         """
         self.regularization = regularization
+        self.conv = conv
 
         # ==== set up placeholder tokens ========
         self.info_size = info_size
@@ -63,19 +64,23 @@ class QModel(object):
         Construct the tf graph.
         """
         with tf.variable_scope("QModel", initializer=tf.uniform_unit_scaling_initializer(1.0)):
-            conv_1 = tf.layers.conv2d(self.placeholders['tile'], 8, 3, activation=tf.nn.relu,
+            if self.conv:
+                conv_1 = tf.layers.conv2d(self.placeholders['tile'], 8, 3, activation=tf.nn.relu,
+                                          kernel_regularizer=tf.contrib.layers.l2_regularizer(self.regularization),
+                                          kernel_initializer=tf.contrib.layers.xavier_initializer(),
+                                          bias_initializer=tf.constant_initializer(0))
+                pool_1 = tf.layers.max_pooling2d(conv_1, 2, 2)
+                conv_2 = tf.contrib.layers.flatten(tf.layers.conv2d(pool_1, 4, 3, activation=tf.nn.relu,
+                                          kernel_regularizer=tf.contrib.layers.l2_regularizer(self.regularization),
+                                          kernel_initializer=tf.contrib.layers.xavier_initializer(),
+                                          bias_initializer=tf.constant_initializer(0)))
+                h_1 = tf.layers.dense(tf.concat([conv_2, self.placeholders['info']], 1), 256, activation=tf.nn.relu,
                                       kernel_regularizer=tf.contrib.layers.l2_regularizer(self.regularization),
-                                      kernel_initializer=tf.contrib.layers.xavier_initializer(),
-                                      bias_initializer=tf.constant_initializer(0))
-            pool_1 = tf.layers.max_pooling2d(conv_1, 2, 2)
-            conv_2 = tf.layers.conv2d(pool_1, 8, 3, activation=tf.nn.relu,
+                                      kernel_initializer=tf.contrib.layers.xavier_initializer())
+            else:
+                h_1 = tf.layers.dense(self.placeholders['info'], 256, activation=tf.nn.relu,
                                       kernel_regularizer=tf.contrib.layers.l2_regularizer(self.regularization),
-                                      kernel_initializer=tf.contrib.layers.xavier_initializer(),
-                                      bias_initializer=tf.constant_initializer(0))
-            pool_2 = tf.contrib.layers.flatten(tf.layers.max_pooling2d(conv_2, 2, 2))
-            h_1 = tf.layers.dense(tf.concat([pool_2, self.placeholders['info']], 1), 256, activation=tf.nn.relu,
-                                  kernel_regularizer=tf.contrib.layers.l2_regularizer(self.regularization),
-                                  kernel_initializer=tf.contrib.layers.xavier_initializer())
+                                      kernel_initializer=tf.contrib.layers.xavier_initializer())
             h_2 = tf.layers.dense(h_1, 256, activation=tf.nn.relu,
                                   kernel_regularizer=tf.contrib.layers.l2_regularizer(self.regularization),
                                   kernel_initializer=tf.contrib.layers.xavier_initializer())
@@ -129,29 +134,32 @@ class QModel(object):
             optimizer = get_optimizer(optimizer_name)(self.lr)
             self.train_op = optimizer.minimize(self.loss, global_step=global_step)
 
-    def inference_Q(self, tile, info):
+    def inference_Q(self, info, tile=None):
         """
         Run 1 epoch. Train on training examples, evaluate on validation set.
         :param state: A state which is represented by a list of float32.
         :return Predicted Q value for all actions of given state.
         """
-        predicted_Q = self.sess.run(self.predicted_Q,
-                                    feed_dict={self.placeholders['tile']: tile,
-                                               self.placeholders['info']: info})
+        feed_dict = {self.placeholders['info']: info}
+        if self.conv:
+            feed_dict[self.placeholders['tile']] = tile
+        predicted_Q = self.sess.run(self.predicted_Q, feed_dict=feed_dict)
+
         return predicted_Q
 
-    def inference_Prob(self, tile, info):
+    def inference_Prob(self, info, tile=None):
         """
         Run 1 epoch. Train on training examples, evaluate on validation set.
         :param state: A state which is represented by a list of float32.
         :return softmax of Q for all actions of given state.
         """
-        prob = self.sess.run(self.soft_max_selection,
-                             feed_dict={self.placeholders['tile']: tile,
-                                        self.placeholders['info']: info})
+        feed_dict = {self.placeholders['info']: info}
+        if self.conv:
+            feed_dict[self.placeholders['tile']] = tile
+        prob = self.sess.run(self.soft_max_selection, feed_dict=feed_dict)
         return prob
 
-    def update_weights(self, tiles, infos, actions, target_Qs):
+    def update_weights(self, infos, actions, target_Qs, tiles=None):
         """
         Update one step on the given state_and_actions batch.
         :param tiles: A list of tiles which is represented by a 2-D array of float32 (width, height).
@@ -159,16 +167,19 @@ class QModel(object):
         :param actions: A list of indices of action which is represented by a int.
         :param target_Q: A list of r + /gamma V.
         """
+        feed_dict = {self.placeholders['info']: infos,
+                     self.placeholders['target_q']: target_Qs,
+                     self.placeholders['action']: actions}
+        if self.conv:
+            feed_dict[self.placeholders['tile']] = tiles
+
         losses = []
         _, loss, summary, global_step = self.sess.run(
             [self.train_op, self.loss, self.merged_summary, self.global_step],
-            feed_dict={self.placeholders['tile']: tiles,
-                       self.placeholders['info']: infos,
-                       self.placeholders['target_q']: target_Qs,
-                       self.placeholders['action']: actions})
+            feed_dict=feed_dict)
         losses.append(loss)
         self.train_writer.add_summary(summary, global_step)
-        if not global_step % 5000:
+        if not global_step % 2000:
             self.save_model('./model')
         return sum(losses) / len(losses)
 
@@ -195,5 +206,3 @@ class QModel(object):
             logging.info("Created model with fresh parameters.")
             self.sess.run(tf.global_variables_initializer())
             logging.info('Num params: %d' % sum(v.get_shape().num_elements() for v in tf.trainable_variables()))
-        init = tf.global_variables_initializer()
-        self.sess.run(init)

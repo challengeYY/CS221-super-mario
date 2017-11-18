@@ -16,6 +16,8 @@ def main():
                         help='Do not render visualization of the game')
     parser.add_argument('--maxGameIter', dest='maxGameIter', nargs='?', default=1, type=int,
                         help='Max number of training iteration')
+    parser.add_argument('--window', dest='windowsize', nargs='?', default=1, type=int,
+                        help='Number of states (including current) used to train')
     parser.add_argument('--train', dest='isTrain', action='store_true', default=False,
                         help='Training mode')
     (options, args) = parser.parse_known_args()
@@ -34,6 +36,8 @@ def main():
         options.isTrain = False
     elif options.player == 'feature':
         agent = FeatureAgent(options, env)
+    elif options.player == 'manual':
+        agent = ManualFeatureAgent(options, env)
 
     if not options.isTrain:
         options.maxGameIter = 1

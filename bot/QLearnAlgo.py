@@ -10,7 +10,7 @@ class QLearningAlgorithm():
         self.featureExtractor = featureExtractor
         self.updateInterval = 10 # number of frames to retrain the model
         self.updateCounter = 0
-        self.batchSize = 5
+        self.batchSize = 20
         self.windowsize = windowsize  # number of frames to look back in a state
         self.statecache = [[]] # list of states for each game
         self.actioncache = [[]] # list of actions for each game
@@ -22,13 +22,25 @@ class QLearningAlgorithm():
 
     # Return the Q function associated with the weights and features
     def getQ(self, window):
-        tile, info = self.featureExtractor(window)
-        scores = self.model.inference_Q([tile], [info])[0]
+        if self.model.conv:
+            tile, info = self.featureExtractor(window)
+            scores = self.model.inference_Q([info], tile=[tile])[0]
+        else:
+            info = self.featureExtractor(window)
+            if info is None:
+                return [0]
+            scores = self.model.inference_Q([info])[0]
         return scores
 
     def getProb(self, window):
-        tile, info = self.featureExtractor(window)
-        scores = self.model.inference_Prob([tile], [info])[0]
+        if self.model.conv:
+            tile, info = self.featureExtractor(window)
+            scores = self.model.inference_Prob([info], tile=[tile])[0]
+        else:
+            info = self.featureExtractor(window)
+            if info is None:
+                return [1.0/len(self.actions)] * len(self.actions)
+            scores = self.model.inference_Prob([info])[0]
         return scores
 
     # This algorithm will produce an action given a state.
@@ -64,50 +76,61 @@ class QLearningAlgorithm():
     # Call this function to get the step size to update the weights.
 
     def sample(self):
+        # randomly choose a game
         gameIdx = random.randint(0, len(self.statecache)) 
+        # Should have cache of s0, a0, ....., sn, an, sn+1, where reward of an is stored in sn+1
         gameFrames = self.statecache[gameIdx]
-        if len(gameFrames) < self.windowsize:
-            return self.sample()
-        frameIdx = random.randint(0, len(gameFrames) - self.windowsize)
-        window = gameFrames[frameIdx:frameIdx + self.windowsize]
-        tile, info = self.featureExtractor(window)
-        action = self.actions[gameIdx][frameIdx]
-    # We will call this function with (s, a, r, s'), which you should use to update |weights|.
-    # Note that if s is a terminal state, then s' will be None.  Remember to check for this.
-    # You should update the weights using self.getStepSize(); use
-    # self.getQ() to compute the current estimate of the parameters.
-    def incorporateFeedback(self, action_idx, newState):
-        # BEGIN_YOUR_CODE (our solution is 12 lines of code, but don't worry if you deviate from this)
+        gameActions = self.actioncache[gameIdx]
+        assert(len(gameFrames) == len(gameActions) + 1)
+
+        if len(gameActions) < self.windowsize:
+            return self.sample() # resample a different game
+
+        # randomly choose index for last frame in the window 
+        if len(gameActions) == self.windowsize:
+            frameIdx = len(gameActions)
+        else:
+            frameIdx = random.randint(self.windowsize, len(gameActions))
+
+        window = gameFrames[frameIdx - self.windowsize:frameIdx]
+        if self.model.conv:
+            tile, info = self.featureExtractor(window)
+        else:
+            tile = None
+            info = self.featureExtractor(window)
+        action = gameActions[frameIdx]
+
+        frame_np1 = gameFrames[frameIdx+1]
+        if get_info(frame_np1)['life'] == 0:
+            reward = -100000
+        else:
+            reward = get_reward(frame_np1)
+        window_np1 = gameFrames[frameIdx - self.windowsize + 1 : frameIdx + 1]
+        Vopt = max(self.getQ(window_np1))
+        gamma = self.discount
+        target = (reward + gamma * Vopt)
+
+        return tile, info, action, target
+
+    # once a while train the model
+    def incorporateFeedback(self):
+        if not self.options.isTrain: return
+
         self.updateCounter += 1
+        if self.updateCounter < self.updateInterval:
+            return
+        self.updateCounter = 0
 
-        if self.updateCounter >= self.updateInterval:
-            self.updateCounter = 0
-            gamma = self.discount
+        print('incorporateFeedback ...')
+        tiles = [] # a list of None if self.mode.conv is False
+        infos = []
+        actions = []
+        target_Qs = []
+        for i in range(self.batchSize):
+            tile, info, action, target = self.sample()
+            tiles.append(tile)
+            infos.append(info)
+            actions.append(action)
+            target_Qs.append(target)
 
-            tiles = []
-            infos = []
-            actions = []
-            Y = []
-            for _ in range(self.batchSize):
-                gameIdx = random.randint(0, len(self.statecache))
-                states = self.statecache[gameIdx]
-                frameIdx = random.randint(1, len(states))
-                window = self.statecache[-1][-self.windowsize-frameIdx:-frameIdx]
-                if len(window) < self.windowsize: continue
-                tile, info = self.featureExtractor(window)
-                tiles.append(tile)
-                infos.append(info)
-                actions.append(action_idx)
-                reward = get_reward(self.statecache[gameIdx][-frameIdx])
-                if get_info(newState)['life'] == 0:
-                    reward = -100000
-                Vopt = max(self.getQ([newState]))
-                target = (reward + gamma * Vopt)
-                Y.append(target)
-
-            print('incorporateFeedback batchSize={}'.format(len(Y)))
-
-            print('tiles', len(tiles))
-            print('info', len(info))
-            print('actions', len(actions))
-            self.model.update_weights(tiles,infos, actions, Y)
+        self.model.update_weights(tiles=tiles, infos=infos, actions=actions, target_Qs=target_Qs)
