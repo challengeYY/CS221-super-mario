@@ -16,7 +16,7 @@ def main():
                         help='Do not render visualization of the game')
     parser.add_argument('--maxGameIter', dest='maxGameIter', nargs='?', default=1, type=int,
                         help='Max number of training iteration')
-    parser.add_argument('--window', dest='windowsize', nargs='?', default=1, type=int,
+    parser.add_argument('--window', dest='windowsize', nargs='?', default=3, type=int,
                         help='Number of states (including current) used to train')
     parser.add_argument('--train', dest='isTrain', action='store_true', default=False,
                         help='Training mode')
@@ -47,8 +47,6 @@ def main():
     try:
         action = agent.initAction()
         while not agent.exit():
-            # if options.player == 'human': # this is added in act of HumanAgent
-                # sleep(0.1)
             obs, reward, is_finished, info = env.step(action)
             if options.render:
                 env.render()
