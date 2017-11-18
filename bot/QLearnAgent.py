@@ -34,10 +34,11 @@ class QLearnAgent(Agent):
         return self.action
 
     def act(self, obs, reward, is_finished, info):
-        self.frame = (obs, reward, is_finished, info)
+        self.frame = (np.copy(obs), reward, is_finished, info.copy())
 
         # caching new frame
         self.framecache.append(self.frame)
+
         if len(self.framecache) > (self.windowsize + 3):
             self.framecache.pop(0) # remove frame outside window to save memory
 
