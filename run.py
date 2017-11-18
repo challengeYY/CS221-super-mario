@@ -16,6 +16,8 @@ def main():
                         help='Do not render visualization of the game')
     parser.add_argument('--maxGameIter', dest='maxGameIter', nargs='?', default=1, type=int,
                         help='Max number of training iteration')
+    parser.add_argument('--maxCache', dest='maxCache', nargs='?', default=20, type=int,
+                        help='Max number of training iteration')
     parser.add_argument('--window', dest='windowsize', nargs='?', default=3, type=int,
                         help='Number of states (including current) used to train')
     parser.add_argument('--train', dest='isTrain', action='store_true', default=False,
@@ -47,10 +49,15 @@ def main():
     try:
         action = agent.initAction()
         while not agent.exit():
-            obs, reward, is_finished, info = env.step(action)
+            total_reward = 0
+            skip_frames = 1
+            for i in range(skip_frames):
+                obs, reward, is_finished, info = env.step(action)
+                total_reward += reward
             if options.render:
                 env.render()
-            action = agent.act(obs, reward, is_finished, info)
+
+            action = agent.act(obs, total_reward - skip_frames, is_finished, info)
     except Exception as e:
         agent.handle(e)
 

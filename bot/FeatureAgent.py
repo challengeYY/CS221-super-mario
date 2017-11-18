@@ -26,10 +26,10 @@ class FeatureAgent(QLearnAgent):
             window_size=self.windowsize,
             num_actions=len(self.actions),
             optimizer='adam',
-            lr=0.001,
+            lr=1e-4,
             decay_step=1000,
             decay_rate=1,
-            regularization=0.01
+            regularization=0.0
         )
         self.model.initialize_model(options.model_dir)
         self.algo.set_model(self.model)
@@ -61,6 +61,6 @@ class FeatureAgent(QLearnAgent):
         # feature.append(info['player_status'])
         # feature.append(info['time'])
         # for state in window:
-            # obs = get_obs(state)
-            # tiles.append(obs)
+        # obs = get_obs(state)
+        # tiles.append(obs)
         # return np.array(np.transpose(tiles, (2, 1, 0))), np.array(feature)

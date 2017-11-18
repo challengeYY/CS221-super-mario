@@ -8,10 +8,12 @@ class ManualFeatureAgent(QLearnAgent):
     def __init__(self, options, env):
         super(ManualFeatureAgent, self).__init__(options, env)
         self.featureExtractors = []
+        self.featureExtractors.append(InfoFeatureExtractor())
         self.featureExtractors.append(VelocityFeatureExtractor())
         self.featureExtractors.append(MarioFeatureExtractor())
         self.featureExtractors.append(FrontFeatureExtractor())
         self.featureExtractors.append(PitFeatureExtractor())
+        self.featureExtractors.append(BehindFeatureExtractor())
 
         featureSize = sum([fe.featureSize() for fe in self.featureExtractors])
         print('featureSize', featureSize)

@@ -20,7 +20,10 @@ def get_mario_coord(obs):
     return marioy, mariox
 
 def get_coord_from_mario(obs, step_x, step_y):
-    marioy, mariox = get_mario_coord(obs)
+    coord = get_mario_coord(obs)
+    if coord is None:
+        return None
+    marioy, mariox = coord
     focusx = mariox + step_x
     focusy = marioy - step_y
     if out_of_frame(focusx, focusy):
@@ -57,3 +60,6 @@ def get_velocity(state1, state2):
             min_diff = diff
             min_v = v
     return v
+
+def get_death_penalty_value(time, distance):
+    return (time - Time.TOTAL_GAME_TIME) - distance / 3

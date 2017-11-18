@@ -14,14 +14,15 @@ class QLearnAgent(Agent):
         self.windowsize = options.windowsize
         self.framecache = [] # list of frames for each game, cleared at the end of the game
         self.gameIter = 0
+        self.maxCache = options.maxCache
         self.isTrain = options.isTrain
         self.env = env
-        self.actions = ['Left', 'Right', 'A', ['Right', 'A'], ['Right', 'B'], ['Right', 'A', 'B'], ['Left', 'A'],
+        self.actions = ['Right', 'Left', 'A', ['Right', 'A'], ['Right', 'B'], ['Right', 'A', 'B'], ['Left', 'A'],
                         ['Left', 'B'], ['Left', 'A', 'B']]
         self.algo = QLearningAlgorithm(
             options=options,
             actions=self.actions,
-            discount=1,
+            discount=0.9,
             featureExtractor=self.featureExtractor
         )
         self.stepCounter = 0
@@ -82,6 +83,10 @@ class QLearnAgent(Agent):
             self.framecache = []
             self.algo.actioncache.append([])
             self.algo.statecache.append([])
+            if len(self.algo.statecache) > self.maxCache:
+                self.algo.actioncache.pop(0)
+                self.algo.statecache.pop(0)
+
 
         info = get_info(self.frame)
         stuck = False

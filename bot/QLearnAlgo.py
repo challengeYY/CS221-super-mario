@@ -2,33 +2,36 @@ from numpy import random
 import operator
 from util import *
 
+
 class QLearningAlgorithm():
     def __init__(self, options, actions, discount, featureExtractor):
         self.actions = actions
         self.discount = discount
         self.featureExtractor = featureExtractor
         self.updateInterval = 10  # number of frames to retrain the model
+        self.updateTargetInterval = 10  # number of frames to retrain the model
         self.updateCounter = 0
+        self.updateTargetCounter = 0
         self.batchSize = 20
         self.statecache = [[]]  # list of states for each game. A state is a window of frames
         self.actioncache = [[]]  # list of actions for each game
         self.options = options
         self.model = None
-        self.explorationProb = 0.2
+        self.explorationProb = 0.20
 
     def set_model(self, model):
         self.model = model
 
     # Return the Q function associated with the weights and features
-    def getQ(self, state):
+    def getQ(self, vs, state):
         if self.model.conv:
             tile, info = self.featureExtractor(state)
-            scores = self.model.inference_Q([info], tile=[tile])[0]
+            scores = self.model.inference_Q(vs, [info], tile=[tile])[0]
         else:
             info = self.featureExtractor(state)
             if info is None:
                 return [0]
-            scores = self.model.inference_Q([info])[0]
+            scores = self.model.inference_Q(vs, [info])[0]
         return scores
 
     def getProb(self, state):
@@ -50,15 +53,19 @@ class QLearningAlgorithm():
         if self.options.isTrain:
             rand = random.random()
             if rand < self.explorationProb:
-                probs = [1.0 / len(self.actions)] * len(self.actions)  # uniform probability
+                actionIdx = random.choice(range(len(self.actions)))
+                print "randomly select action id: {}".format(actionIdx)
             else:
-                probs = self.getProb(state)  # soft max prob
-            actionIdx = random.choice(range(len(self.actions)),
-                                      p=probs)
-            print "randomly select action id: {}".format(actionIdx)
-            print "Probs: {}".format(probs)
+                q = self.getQ(self.model.prediction_vs, state)
+                actionIdx, _ = max(enumerate(q), key=operator.itemgetter(1))
+                print "Q: {} best action id: {}".format(q, actionIdx)
+        # probs = self.getProb(state)  # soft max prob
+        #    actionIdx = random.choice(range(len(self.actions)),
+        #                              p=probs)
+        #    print "randomly select action id: {}".format(actionIdx)
+        #    print "Probs: {}".format(probs)
         else:
-            actionIdx, q = max(enumerate(self.getQ(state)), key=operator.itemgetter(1))
+            actionIdx, q = max(enumerate(self.getQ(self.model.prediction_vs, state)), key=operator.itemgetter(1))
             print "Q: {} best action id: {}".format(q, actionIdx)
         return Action.act(self.actions[actionIdx]), actionIdx
 
@@ -71,8 +78,8 @@ class QLearningAlgorithm():
         gameStates = self.statecache[gameIdx]
         gameActions = self.actioncache[gameIdx]
 
-        if len(gameActions)==0:
-            return self.sample() # resample a different game
+        if len(gameActions) == 0:
+            return self.sample()  # resample a different game
 
         # randomly choose a state except last one in the game
         stateIdx = random.randint(0, len(gameActions)) if len(gameActions) > 1 else 0
@@ -87,14 +94,11 @@ class QLearningAlgorithm():
 
         state_np1 = gameStates[stateIdx + 1]
         reward = get_reward(state_np1[-1])
-        Vopt = max(self.getQ(state_np1))
+        Vopt = max(self.getQ(self.model.target_vs, state_np1))
         gamma = self.discount
         target = (reward + gamma * Vopt)
         if get_info(state_np1[-1])['life'] == 0:
-            state_info = get_info(state_np1[-1])
-            distance = state_info['distance']
-            time = state_info['time']
-            target = time-400-distance/2.0
+            target = reward
 
         return tile, info, action, target
 
@@ -120,3 +124,10 @@ class QLearningAlgorithm():
             target_Qs.append(target)
 
         self.model.update_weights(tiles=tiles, infos=infos, actions=actions, target_Qs=target_Qs)
+
+        self.updateTargetCounter += 1
+        if self.updateTargetCounter < self.updateTargetInterval:
+            return
+        self.updateTargetCounter = 0
+        print('Updating Target Network ...')
+        self.model.update_target_network()

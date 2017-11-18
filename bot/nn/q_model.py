@@ -26,7 +26,7 @@ def get_optimizer(opt):
 
 class QModel(object):
     def __init__(self, info_size, num_actions, tile_row, tile_col, window_size, optimizer='adam', lr=0.01,
-                 decay_step=1000, decay_rate=1, regularization=0, conv=True, save_period=500):
+                 decay_step=1000, decay_rate=1, regularization=0, conv=True, save_period=500, gradient_clip=10):
         """
         Initializes your System
         :param stateVectorLength: Length of vector used to represent state and action.
@@ -34,6 +34,8 @@ class QModel(object):
         """
         self.regularization = regularization
         self.conv = conv
+        self.save_period = save_period
+        self.gradient_clip = gradient_clip
 
         # ==== set up placeholder tokens ========
         self.info_size = info_size
@@ -41,7 +43,6 @@ class QModel(object):
         self.tile_row = tile_row
         self.tile_col = tile_col
         self.window_size = window_size
-        self.save_period = save_period
         self.placeholders = {}
         self.placeholders['tile'] = tf.placeholder(tf.float32, shape=(None, self.tile_row, self.tile_col, 1))
         self.placeholders['info'] = tf.placeholder(tf.float32, shape=(None, self.info_size))
@@ -49,7 +50,14 @@ class QModel(object):
         self.placeholders['action'] = tf.placeholder(tf.int32, shape=(None,))
 
         # ==== assemble pieces ====
-        self.setup_model()
+        self.predicted_Q = {}
+        self.scope_vars = {}
+        self.prediction_vs = 'prediction_network'
+        self.target_vs = 'target_network'
+        self.predicted_Q[self.prediction_vs], self.scope_vars[self.prediction_vs] = self.create_model(
+            self.prediction_vs)
+        self.predicted_Q[self.target_vs], self.scope_vars[self.target_vs] = self.create_model(self.target_vs)
+        self.setup_target_update(self.prediction_vs, self.target_vs)
         self.setup_loss()
         self.setup_train(lr, decay_step, decay_rate, optimizer)
 
@@ -60,11 +68,11 @@ class QModel(object):
         self.sess = tf.Session()
         self.setup_tensorboard()
 
-    def setup_model(self):
+    def create_model(self, variable_scope):
         """
         Construct the tf graph.
         """
-        with tf.variable_scope("QModel", initializer=tf.uniform_unit_scaling_initializer(1.0)):
+        with tf.variable_scope(variable_scope, initializer=tf.uniform_unit_scaling_initializer(1.0)):
             if self.conv:
                 conv_1 = tf.layers.conv2d(self.placeholders['tile'], 32, 3, activation=tf.nn.relu,
                                           kernel_regularizer=tf.contrib.layers.l2_regularizer(self.regularization),
@@ -80,26 +88,26 @@ class QModel(object):
                 h_1 = tf.layers.dense(tf.concat([conv_2, self.placeholders['info']], 1), 256, activation=tf.nn.relu,
                                       kernel_regularizer=tf.contrib.layers.l2_regularizer(self.regularization),
                                       kernel_initializer=tf.contrib.layers.xavier_initializer())
-            else:
-                h_1 = tf.layers.dense(self.placeholders['info'], 256, activation=tf.nn.relu,
+                h_2 = tf.layers.dense(h_1, 256, activation=tf.nn.relu,
                                       kernel_regularizer=tf.contrib.layers.l2_regularizer(self.regularization),
                                       kernel_initializer=tf.contrib.layers.xavier_initializer())
-            h_2 = tf.layers.dense(h_1, 256, activation=tf.nn.relu,
-                                  kernel_regularizer=tf.contrib.layers.l2_regularizer(self.regularization),
-                                  kernel_initializer=tf.contrib.layers.xavier_initializer())
-            h_3 = tf.layers.dense(h_2, 128, activation=tf.nn.relu,
-                                  kernel_regularizer=tf.contrib.layers.l2_regularizer(self.regularization),
-                                  kernel_initializer=tf.contrib.layers.xavier_initializer())
-            h_4 = tf.layers.dense(h_3, 64, activation=tf.nn.relu,
-                                  kernel_regularizer=tf.contrib.layers.l2_regularizer(self.regularization),
-                                  kernel_initializer=tf.contrib.layers.xavier_initializer())
+                h_3 = tf.layers.dense(h_2, 128, activation=tf.nn.relu,
+                                      kernel_regularizer=tf.contrib.layers.l2_regularizer(self.regularization),
+                                      kernel_initializer=tf.contrib.layers.xavier_initializer())
+                h_4 = tf.layers.dense(h_3, 64, activation=tf.nn.relu,
+                                      kernel_regularizer=tf.contrib.layers.l2_regularizer(self.regularization),
+                                      kernel_initializer=tf.contrib.layers.xavier_initializer())
+            else:
+                h_4 = tf.layers.dense(self.placeholders['info'], 32, activation=tf.nn.relu,
+                                      kernel_regularizer=tf.contrib.layers.l2_regularizer(self.regularization),
+                                      kernel_initializer=tf.contrib.layers.xavier_initializer())
             h_5 = tf.layers.dense(h_4, 32, activation=tf.nn.relu,
                                   kernel_regularizer=tf.contrib.layers.l2_regularizer(self.regularization),
                                   kernel_initializer=tf.contrib.layers.xavier_initializer())
-            self.predicted_Q = tf.layers.dense(h_5, self.numActions, activation=None,
-                                               kernel_regularizer=tf.contrib.layers.l2_regularizer(self.regularization),
-                                               kernel_initializer=tf.contrib.layers.xavier_initializer())
-            self.soft_max_selection = tf.nn.softmax(self.predicted_Q)
+            return (tf.layers.dense(h_5, self.numActions, activation=tf.nn.relu,
+                                    kernel_regularizer=tf.contrib.layers.l2_regularizer(self.regularization),
+                                    kernel_initializer=tf.contrib.layers.xavier_initializer()),
+                    tf.contrib.framework.get_variables(variable_scope))
 
     def setup_tensorboard(self):
         self.merged_summary = tf.summary.merge_all()
@@ -116,8 +124,8 @@ class QModel(object):
             action_masks = tf.cast(tf.one_hot(indices, depth), tf.bool)
             reg_loss = tf.losses.get_regularization_loss()
             tf.summary.scalar('Regularization Loss', reg_loss)
-            raw_loss = tf.losses.mean_squared_error(self.placeholders['target_q'],
-                                                    tf.boolean_mask(self.predicted_Q, action_masks))
+            raw_loss = tf.losses.huber_loss(self.placeholders['target_q'],
+                                            tf.boolean_mask(self.predicted_Q[self.prediction_vs], action_masks))
             self.loss = raw_loss + reg_loss
             tf.summary.scalar('Q Loss', raw_loss)
             tf.summary.scalar('Total Loss', self.loss)
@@ -135,9 +143,21 @@ class QModel(object):
 
             self.global_step = global_step
             optimizer = get_optimizer(optimizer_name)(self.lr)
-            self.train_op = optimizer.minimize(self.loss, global_step=global_step)
+            grad_and_vars = optimizer.compute_gradients(self.loss)
+            grads = [grad_and_var[0] for grad_and_var in grad_and_vars]
+            variables = [grad_and_var[1] for grad_and_var in grad_and_vars]
+            grads_clipped, self.grad_norm = tf.clip_by_global_norm(grads, self.gradient_clip)
+            self.clipped_grad_norm = tf.global_norm(grads_clipped)
+            self.train_op = optimizer.apply_gradients(zip(grads_clipped, variables), global_step=self.global_step)
 
-    def inference_Q(self, info, tile=None):
+    def setup_target_update(self, source_scope, target_scope):
+        update_target_expr = []
+        for var, var_target in zip(sorted(self.scope_vars[source_scope], key=lambda v: v.name),
+                                   sorted(self.scope_vars[target_scope], key=lambda v: v.name)):
+            update_target_expr.append(var_target.assign(var))
+        self.update_target_network_ops = tf.group(*update_target_expr)
+
+    def inference_Q(self, variable_scope, info, tile=None):
         """
         Run 1 epoch. Train on training examples, evaluate on validation set.
         :param state: A state which is represented by a list of float32.
@@ -146,7 +166,7 @@ class QModel(object):
         feed_dict = {self.placeholders['info']: info}
         if self.conv:
             feed_dict[self.placeholders['tile']] = tile
-        predicted_Q = self.sess.run(self.predicted_Q, feed_dict=feed_dict)
+        predicted_Q = self.sess.run(self.predicted_Q[variable_scope], feed_dict=feed_dict)
 
         return predicted_Q
 
@@ -185,6 +205,9 @@ class QModel(object):
         if not global_step % self.save_period:
             self.save_model('./model')
         return sum(losses) / len(losses)
+
+    def update_target_network(self):
+        self.sess.run([self.update_target_network_ops])
 
     def save_model(self, output_path):
         """

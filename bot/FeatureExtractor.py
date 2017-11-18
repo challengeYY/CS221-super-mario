@@ -102,8 +102,10 @@ class PitFeatureExtractor(FeatureExtractor):
         feature['pit_ahead'] = 0
         last_state = window[-1]
         obs = get_obs(last_state)
-        marioy, mariox = get_mario_coord(obs)
-        for i in range(1, 4):
-            if not out_of_frame(mariox+i,marioy+1) and obs[marioy+1, mariox+i] == Tile.EMPTY_SPACE:
-                feature['pit_ahead'] = 1
-                break
+        coord = get_mario_coord(obs)
+        if coord is not None:
+            marioy, mariox = coord
+            for i in range(1, 4):
+                if not out_of_frame(mariox+i,marioy+1) and obs[marioy+1, mariox+i] == Tile.EMPTY_SPACE:
+                    feature['pit_ahead'] = 1
+                    break
