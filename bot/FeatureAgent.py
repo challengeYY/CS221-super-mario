@@ -11,9 +11,10 @@ class FeatureAgent(QLearnAgent):
         self.featureExtractors = []
         self.featureExtractors.append(InfoFeatureExtractor())
         self.featureExtractors.append(VelocityFeatureExtractor())
-#        self.featureExtractors.append(MarioFeatureExtractor())
+        self.featureExtractors.append(MarioFeatureExtractor())
         self.featureExtractors.append(FrontFeatureExtractor())
         self.featureExtractors.append(PitFeatureExtractor())
+        self.featureExtractors.append(BehindFeatureExtractor())
 
         self.tileFeatureExtractor = TileFeatureExtractor()
 
