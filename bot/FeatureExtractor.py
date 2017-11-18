@@ -7,7 +7,7 @@ from util import *
 class FeatureExtractor:
     __metaclass__ = ABCMeta
 
-    # Agent's initial action 
+    # Agent's initial action
     @abstractmethod
     def featureSize(self): pass
 
@@ -70,6 +70,23 @@ class FrontFeatureExtractor(FeatureExtractor):
                 for j in range(5):
                     if obs[hor_y-j, hor_x] == Tile.EMPTY_SPACE:
                         feature['ahead_{}_height'.format(i)] = j
+                        break
+
+class BehindFeatureExtractor(FeatureExtractor):
+    def featureSize(self): return 4
+    def extract(self, feature, window):
+        # extract information about object behind MARIO
+        last_state = window[-1]
+        obs = get_obs(last_state)
+        for i in range(1, 5):
+            horizontal_tile = get_coord_from_mario(obs, -i, 0)
+            if horizontal_tile is None:
+                feature['behind_{}_height'.format(i)] = 0
+            else:
+                hor_y, hor_x = horizontal_tile
+                for j in range(5):
+                    if obs[hor_y-j, hor_x] == Tile.EMPTY_SPACE:
+                        feature['behind_{}_height'.format(i)] = j
                         break
 
 class PitFeatureExtractor(FeatureExtractor):
