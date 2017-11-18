@@ -26,7 +26,7 @@ def get_optimizer(opt):
 
 class QModel(object):
     def __init__(self, info_size, num_actions, tile_row, tile_col, window_size,optimizer='adam', lr=0.01, decay_step=1000,
-                 decay_rate=1, regularization=0, conv=True):
+                 decay_rate=1, regularization=0, conv=True, save_period=500):
         """
         Initializes your System
         :param stateVectorLength: Length of vector used to represent state and action.
@@ -41,6 +41,7 @@ class QModel(object):
         self.tile_row = tile_row
         self.tile_col = tile_col
         self.window_size= window_size
+        self.save_period = save_period
         self.placeholders = {}
         self.placeholders['tile'] = tf.placeholder(tf.float32, shape=(None, self.tile_row, self.tile_col, window_size))
         self.placeholders['info'] = tf.placeholder(tf.float32, shape=(None, self.info_size))
@@ -179,7 +180,7 @@ class QModel(object):
             feed_dict=feed_dict)
         losses.append(loss)
         self.train_writer.add_summary(summary, global_step)
-        if not global_step % 2000:
+        if not global_step % self.save_period:
             self.save_model('./model')
         return sum(losses) / len(losses)
 
