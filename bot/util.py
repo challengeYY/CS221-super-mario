@@ -11,12 +11,16 @@ def get_tile_from_mario(obs, step_x, step_y):
     focusy, focusx = get_coord_from_mario(obs, step_x, step_y)
     return obs[focusy, focusx]
 
-def get_coord_from_mario(obs, step_x, step_y):
+def get_mario_coord(obs):
     ys, xs = np.where(obs == Tile.MARIO)
     if len(xs) == 0:
         return None
     mariox = xs[0]
     marioy = ys[0]
+    return marioy, mariox
+
+def get_coord_from_mario(obs, step_x, step_y):
+    marioy, mariox = get_mario_coord(obs)
     focusx = mariox + step_x
     focusy = marioy - step_y
     if out_of_frame(focusx, focusy):
