@@ -8,7 +8,7 @@ class FeatureAgent(QLearnAgent):
         super(FeatureAgent, self).__init__(options, env)
         featureSize = Window.getFrameSize() * self.windowsize
         featureSize += 4
-        print('featureSize', featureSize)
+        # print('featureSize', featureSize)
         self.model = QModel(
             info_size=4,
             tile_row=Window.Width,

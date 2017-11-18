@@ -25,7 +25,7 @@ class QLearnAgent(Agent):
             featureExtractor=self.featureExtractor
         )
         self.stepCounter = 0
-        self.stepCounterMax = 10
+        self.stepCounterMax = 5
 
     def featureExtractor(self, window, action):
         raise Exception('Abstract method! should be overridden')
