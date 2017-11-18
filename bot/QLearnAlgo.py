@@ -71,8 +71,11 @@ class QLearningAlgorithm():
         gameStates = self.statecache[gameIdx]
         gameActions = self.actioncache[gameIdx]
 
+        if len(gameActions)==0:
+            return self.sample() # resample a different game
+
         # randomly choose a state except last one in the game
-        stateIdx = random.randint(0, len(gameStates) - 1) if len(gameStates) > 1 else 0
+        stateIdx = random.randint(0, len(gameActions)) if len(gameActions) > 1 else 0
 
         state_n = gameStates[stateIdx]
         if self.model.conv:
@@ -87,11 +90,11 @@ class QLearningAlgorithm():
         Vopt = max(self.getQ(state_np1))
         gamma = self.discount
         target = (reward + gamma * Vopt)
-        all_info = get_info(state_np1[-1])
-        if all_info['life'] == 0:
-            distance = all_info['distance']
-            time = all_info['time']
-            target = time - Time.TOTAL_GAME_TIME - distance / 2.0
+        if get_info(state_np1[-1])['life'] == 0:
+            state_info = get_info(state_np1[-1])
+            distance = state_info['distance']
+            time = state_info['time']
+            target = time-400-distance/2.0
 
         return tile, info, action, target
 
