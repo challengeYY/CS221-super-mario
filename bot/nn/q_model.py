@@ -65,12 +65,12 @@ class QModel(object):
         """
         with tf.variable_scope("QModel", initializer=tf.uniform_unit_scaling_initializer(1.0)):
             if self.conv:
-                conv_1 = tf.layers.conv2d(self.placeholders['tile'], 8, 3, activation=tf.nn.relu,
+                conv_1 = tf.layers.conv2d(self.placeholders['tile'], 32, 3, activation=tf.nn.relu,
                                           kernel_regularizer=tf.contrib.layers.l2_regularizer(self.regularization),
                                           kernel_initializer=tf.contrib.layers.xavier_initializer(),
                                           bias_initializer=tf.constant_initializer(0))
                 pool_1 = tf.layers.max_pooling2d(conv_1, 2, 2)
-                conv_2 = tf.contrib.layers.flatten(tf.layers.conv2d(pool_1, 4, 3, activation=tf.nn.relu,
+                conv_2 = tf.contrib.layers.flatten(tf.layers.conv2d(pool_1, 64, 3, activation=tf.nn.relu,
                                           kernel_regularizer=tf.contrib.layers.l2_regularizer(self.regularization),
                                           kernel_initializer=tf.contrib.layers.xavier_initializer(),
                                           bias_initializer=tf.constant_initializer(0)))
