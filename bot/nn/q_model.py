@@ -25,8 +25,8 @@ def get_optimizer(opt):
 
 
 class QModel(object):
-    def __init__(self, info_size, num_actions, tile_row, tile_col, window_size,optimizer='adam', lr=0.01, decay_step=1000,
-                 decay_rate=1, regularization=0, conv=True, save_period=500):
+    def __init__(self, info_size, num_actions, tile_row, tile_col, window_size, optimizer='adam', lr=0.01,
+                 decay_step=1000, decay_rate=1, regularization=0, conv=True, save_period=500):
         """
         Initializes your System
         :param stateVectorLength: Length of vector used to represent state and action.
@@ -40,10 +40,10 @@ class QModel(object):
         self.numActions = num_actions
         self.tile_row = tile_row
         self.tile_col = tile_col
-        self.window_size= window_size
+        self.window_size = window_size
         self.save_period = save_period
         self.placeholders = {}
-        self.placeholders['tile'] = tf.placeholder(tf.float32, shape=(None, self.tile_row, self.tile_col, window_size))
+        self.placeholders['tile'] = tf.placeholder(tf.float32, shape=(None, self.tile_row, self.tile_col, 1))
         self.placeholders['info'] = tf.placeholder(tf.float32, shape=(None, self.info_size))
         self.placeholders['target_q'] = tf.placeholder(tf.float32, shape=(None,))
         self.placeholders['action'] = tf.placeholder(tf.int32, shape=(None,))
@@ -71,10 +71,12 @@ class QModel(object):
                                           kernel_initializer=tf.contrib.layers.xavier_initializer(),
                                           bias_initializer=tf.constant_initializer(0))
                 pool_1 = tf.layers.max_pooling2d(conv_1, 2, 2)
-                conv_2 = tf.contrib.layers.flatten(tf.layers.conv2d(pool_1, 64, 3, activation=tf.nn.relu,
-                                          kernel_regularizer=tf.contrib.layers.l2_regularizer(self.regularization),
-                                          kernel_initializer=tf.contrib.layers.xavier_initializer(),
-                                          bias_initializer=tf.constant_initializer(0)))
+                conv_2 = tf.contrib.layers.flatten(
+                    tf.layers.conv2d(pool_1, 64, 3, activation=tf.nn.relu,
+                                     kernel_regularizer=tf.contrib.layers.l2_regularizer(
+                                         self.regularization),
+                                     kernel_initializer=tf.contrib.layers.xavier_initializer(),
+                                     bias_initializer=tf.constant_initializer(0)))
                 h_1 = tf.layers.dense(tf.concat([conv_2, self.placeholders['info']], 1), 256, activation=tf.nn.relu,
                                       kernel_regularizer=tf.contrib.layers.l2_regularizer(self.regularization),
                                       kernel_initializer=tf.contrib.layers.xavier_initializer())
