@@ -1,16 +1,25 @@
+from collections import OrderedDict
 import numpy as np
 from nn.q_model import *
 from QLearnAgent import *
+from FeatureExtractor import *
 
 
 class FeatureAgent(QLearnAgent):
     def __init__(self, options, env):
         super(FeatureAgent, self).__init__(options, env)
-        featureSize = Window.getFrameSize() * self.windowsize
-        featureSize += 4
-        # print('featureSize', featureSize)
+        self.featureExtractors = []
+        self.featureExtractors.append(InfoFeatureExtractor())
+        self.featureExtractors.append(VelocityFeatureExtractor())
+        self.featureExtractors.append(MarioFeatureExtractor())
+        self.featureExtractors.append(FrontFeatureExtractor())
+        self.featureExtractors.append(PitFeatureExtractor())
+
+        self.tileFeatureExtractor = TileFeatureExtractor()
+
+        featureSize = sum([fe.featureSize() for fe in self.featureExtractors])
         self.model = QModel(
-            info_size=4,
+            info_size=featureSize,
             tile_row=Window.Width,
             tile_col=Window.Height,
             window_size=self.windowsize,
@@ -36,17 +45,21 @@ class FeatureAgent(QLearnAgent):
     # time = info['time'] # # The current time left
     # ignore = info['ignore'] # Will be added with a value of True if the game is stuck and is terminated early
     def featureExtractor(self, window):
-        if len(window) != self.windowsize:
-            raise Exception('{} != windowsize {}'.format(len(window), self.windowsize))
-        feature = []
-        tiles = []
-        last_state = window[-1]
-        info = get_info(last_state)
-        feature.append(info['distance'])
-        feature.append(info['coins'])
-        feature.append(info['player_status'])
-        feature.append(info['time'])
-        for state in window:
-            obs = get_obs(state)
-            tiles.append(obs)
-        return np.array(np.transpose(tiles, (2, 1, 0))), np.array(feature)
+        feature = OrderedDict()
+        for fe in self.featureExtractors:
+            fe.extract(feature, window)
+        tiles = self.tileFeatureExtractor.extract(OrderedDict(), window)
+        return tiles, feature.values()
+
+        # feature = []
+        # tiles = []
+        # last_state = window[-1]
+        # info = get_info(last_state)
+        # feature.append(info['distance'])
+        # feature.append(info['coins'])
+        # feature.append(info['player_status'])
+        # feature.append(info['time'])
+        # for state in window:
+            # obs = get_obs(state)
+            # tiles.append(obs)
+        # return np.array(np.transpose(tiles, (2, 1, 0))), np.array(feature)
