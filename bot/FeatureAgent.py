@@ -16,7 +16,7 @@ class FeatureAgent(QLearnAgent):
             window_size=self.windowsize,
             num_actions=len(self.actions),
             optimizer='adam',
-            lr=0.1,
+            lr=0.01,
             decay_step=1000,
             decay_rate=1,
             regularization=0.01
