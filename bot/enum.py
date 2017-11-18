@@ -59,3 +59,6 @@ class Action:
         if len(l)==0:
             l.append(Action.NO_ACTION)
         return l
+
+class Time:
+    TOTAL_GAME_TIME = 400
