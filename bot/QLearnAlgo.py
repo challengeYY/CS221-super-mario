@@ -88,8 +88,8 @@ class QLearningAlgorithm():
         Vopt = max(self.getQ(state_np1))
         gamma = self.discount
         target = (reward + gamma * Vopt)
-        if get_info(state_np1)['life'] == 0:
-            info = get_info(state_np1)
+        if get_info(state_np1[-1])['life'] == 0:
+            info = get_info(state_np1[-1])
             distance = info['distance']
             time = info['time']
             target = time-400-distance/2.0
