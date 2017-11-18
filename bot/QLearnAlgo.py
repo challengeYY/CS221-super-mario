@@ -8,12 +8,12 @@ class QLearningAlgorithm():
         self.actions = actions
         self.discount = discount
         self.featureExtractor = featureExtractor
-        # self.batchsize = 10 # number of frames to retrain the model
-        self.batchsize = 1
+        self.updateInterval = 10 # number of frames to retrain the model
+        self.updateCounter = 0
+        self.batchSize = 5
         self.windowsize = windowsize  # number of frames to look back in a state
-        self.statecache = []
-        self.actioncache = []
-        self.batchcounter = 0
+        self.statecache = [[]] # list of states for each game
+        self.actioncache = [[]] # list of actions for each game
         self.options = options
         self.model = None
 
@@ -39,7 +39,7 @@ class QLearningAlgorithm():
         actionIdx = 0
         if self.options.isTrain:
             if self.windowsize > 1:
-                probs = self.getProb(self.statecache[-self.windowsize + 1:] + [state])
+                probs = self.getProb(self.statecache[-1][-self.windowsize + 1:] + [state])
                 actionIdx = random.choice(range(len(self.actions)),
                                           p=probs)
                 print "randomly select action id: {}".format(actionIdx)
@@ -49,11 +49,11 @@ class QLearningAlgorithm():
                 actionIdx = random.choice(range(len(self.actions)), p=probs)
                 print "randomly select action id: {}".format(actionIdx)
                 print "Probs: {}".format(probs)
-        elif len(self.statecache) < self.windowsize:
+        elif len(self.statecache[-1]) < self.windowsize:
             actionIdx = self.actions.index('Right')
         else:
             if self.windowsize > 1:
-                actionIdx, q = max(enumerate(self.getQ(self.statecache[-self.windowsize + 1:] + [state])),
+                actionIdx, q = max(enumerate(self.getQ(self.statecache[-1][-self.windowsize + 1:] + [state])),
                                    key=operator.itemgetter(1))
                 print "Q: {} best action id: {}".format(q, actionIdx)
             else:
@@ -63,42 +63,51 @@ class QLearningAlgorithm():
 
     # Call this function to get the step size to update the weights.
 
+    def sample(self):
+        gameIdx = random.randint(0, len(self.statecache)) 
+        gameFrames = self.statecache[gameIdx]
+        if len(gameFrames) < self.windowsize:
+            return self.sample()
+        frameIdx = random.randint(0, len(gameFrames) - self.windowsize)
+        window = gameFrames[frameIdx:frameIdx + self.windowsize]
+        tile, info = self.featureExtractor(window)
+        action = self.actions[gameIdx][frameIdx]
     # We will call this function with (s, a, r, s'), which you should use to update |weights|.
     # Note that if s is a terminal state, then s' will be None.  Remember to check for this.
     # You should update the weights using self.getStepSize(); use
     # self.getQ() to compute the current estimate of the parameters.
     def incorporateFeedback(self, action_idx, newState):
         # BEGIN_YOUR_CODE (our solution is 12 lines of code, but don't worry if you deviate from this)
-        self.batchcounter += 1
+        self.updateCounter += 1
 
-        if self.batchcounter >= self.batchsize:
-            self.batchcounter = 0
+        if self.updateCounter >= self.updateInterval:
+            self.updateCounter = 0
             gamma = self.discount
 
             tiles = []
             infos = []
             actions = []
             Y = []
-            # for i in range(1, self.batchsize+1):
-            #     window = self.statecache[-self.windowsize-i:-i]
-            #     if len(window) < self.windowsize: continue
-            #     X.append(self.featureExtractor(window, action))
-            #     reward = get_reward(self.statecache[-i])
-            #     Vopt = max([self.getQ(window, a) for a in self.actions(newState)])
-            #     target = (reward + gamma * Vopt)
-            #     Y.append(target)
+            for _ in range(self.batchSize):
+                gameIdx = random.randint(0, len(self.statecache))
+                states = self.statecache[gameIdx]
+                frameIdx = random.randint(1, len(states))
+                window = self.statecache[-1][-self.windowsize-frameIdx:-frameIdx]
+                if len(window) < self.windowsize: continue
+                tile, info = self.featureExtractor(window)
+                tiles.append(tile)
+                infos.append(info)
+                actions.append(action_idx)
+                reward = get_reward(self.statecache[gameIdx][-frameIdx])
+                if get_info(newState)['life'] == 0:
+                    reward = -100000
+                Vopt = max(self.getQ([newState]))
+                target = (reward + gamma * Vopt)
+                Y.append(target)
 
-            # try batchsize = 1
-            window = self.statecache[-self.windowsize:]
-            tile, info = self.featureExtractor(window)
-            tiles.append(tile)
-            infos.append(info)
-            actions.append(action_idx)
-            reward = get_reward(newState)
-            if get_info(newState)['life'] == 0:
-                reward = -100000
-            Vopt = max(self.getQ([newState]))
-            target = (reward + gamma * Vopt)
-            Y.append(target)
-            print 'target: {}'.format(target)
+            print('incorporateFeedback batchSize={}'.format(len(Y)))
+
+            print('tiles', len(tiles))
+            print('info', len(info))
+            print('actions', len(actions))
             self.model.update_weights(tiles,infos, actions, Y)

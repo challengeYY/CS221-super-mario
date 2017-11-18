@@ -33,17 +33,16 @@ class QLearnAgent(Agent):
     def act(self, obs, reward, is_finished, info):
         self.state = (obs, reward, is_finished, info)
 
-        if len(self.algo.statecache) >= 1 and self.isTrain:
-            # prevState = self.algo.statecache[-1]
+        if len(self.algo.statecache[-1]) >= 1 and self.isTrain:
             prevAction = self.algo.actioncache[-1]
             self.algo.incorporateFeedback(prevAction, self.state)
 
         self.action, action_idx = self.algo.getAction(self.state)
 
         # caching states
-        self.algo.statecache.append(self.state)
+        self.algo.statecache[-1].append(self.state)
         # names can be a list
-        self.algo.actioncache.append(action_idx)
+        self.algo.actioncache[-1].append(action_idx)
 
         self.log(self.action, reward)
         return self.action
@@ -54,9 +53,10 @@ class QLearnAgent(Agent):
         if is_finished(self.state):
             self.gameIter += 1
             self.env.reset()
-            self.algo.actioncache = []
-            self.algo.statecache = []
-            self.algo.batchcounter = 0
+            print('statecache {}'.format(len(self.algo.statecache[-1])))
+            print('action {}'.format(len(self.algo.actions[-1])))
+            self.algo.actioncache.append([])
+            self.algo.statecache.append([])
 
         info = get_info(self.state)
         stuck = False
