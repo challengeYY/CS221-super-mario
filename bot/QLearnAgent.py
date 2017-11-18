@@ -44,6 +44,9 @@ class QLearnAgent(Agent):
         # only update state and action once a while
         self.stepCounter += 1 
         if self.stepCounter < self.stepCounterMax:
+            if is_finished:
+                state = self.framecache[-self.windowsize:]
+                self.algo.statecache[-1].append(state)
             return self.action
 
         # if not enough frame for a window, keep playing 
