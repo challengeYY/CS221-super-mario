@@ -8,10 +8,11 @@ from QLearnAlgo import *
 
 class QLearnAgent(Agent):
     def __init__(self, options, env):
-        self.action = [0, 0, 0, 0, 0, 0]
-        self.state = None
+        self.action = Action.act('Right')
+        self.frame = None
         self.maxGameIter = options.maxGameIter
-        self.windowsize = 1
+        self.windowsize = options.windowsize
+        self.framecache = [] # list of frames for each game, cleared at the end of the game
         self.gameIter = 0
         self.isTrain = options.isTrain
         self.env = env
@@ -21,10 +22,10 @@ class QLearnAgent(Agent):
             options=options,
             actions=self.actions,
             discount=1,
-            featureExtractor=self.featureExtractor,
-            windowsize=self.windowsize,
-            explorationRate=0.1
+            featureExtractor=self.featureExtractor
         )
+        self.stepCounter = 0
+        self.stepCounterMax = 10
 
     def featureExtractor(self, window, action):
         raise Exception('Abstract method! should be overridden')
@@ -33,34 +34,52 @@ class QLearnAgent(Agent):
         return self.action
 
     def act(self, obs, reward, is_finished, info):
-        self.state = (obs, reward, is_finished, info)
+        self.frame = (obs, reward, is_finished, info)
 
-        if len(self.algo.statecache) >= 1:
-            # prevState = self.algo.statecache[-1]
-            prevAction = self.algo.actioncache[-1]
-            self.algo.incorporateFeedback(prevAction, self.state)
+        # caching new frame
+        self.framecache.append(self.frame)
+        if len(self.framecache) > (self.windowsize + 3):
+            self.framecache.pop(0) # remove frame outside window to save memory
 
-        self.action, action_idx = self.algo.getAction(self.state)
+        # only update state and action once a while
+        self.stepCounter += 1 
+        if self.stepCounter < self.stepCounterMax:
+            return self.action
 
-        # caching states
-        self.algo.statecache.append(self.state)
-        # names can be a list
-        self.algo.actioncache.append(action_idx)
+        # if not enough frame for a window, keep playing 
+        if len(self.framecache) < self.windowsize:
+            return self.action
+
+        self.stepCounter = 0
+
+        # caching new state
+        state = self.framecache[-self.windowsize:]
+        self.algo.statecache[-1].append(state)
+
+        self.algo.incorporateFeedback()
+
+        # get new action
+        if is_finished:
+            self.action = Action.empty()
+        else:
+            # get and cache new action 
+            self.action, action_idx = self.algo.getAction(state)
+            self.algo.actioncache[-1].append(action_idx)
 
         self.log(self.action, reward)
         return self.action
 
     def exit(self):
-        if self.state is None:
+        if self.frame is None:
             return False
-        if is_finished(self.state):
+        if is_finished(self.frame):
             self.gameIter += 1
             self.env.reset()
-            self.algo.actioncache = []
-            self.algo.statecache = []
-            self.algo.batchcounter = 0
+            self.framecache = []
+            self.algo.actioncache.append([])
+            self.algo.statecache.append([])
 
-        info = get_info(self.state)
+        info = get_info(self.frame)
         stuck = False
         if 'ignore' in info:
             stuck = info['ignore']
