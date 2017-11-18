@@ -11,7 +11,7 @@ class FeatureAgent(QLearnAgent):
         self.featureExtractors = []
         self.featureExtractors.append(InfoFeatureExtractor())
         self.featureExtractors.append(VelocityFeatureExtractor())
-        self.featureExtractors.append(MarioFeatureExtractor())
+#        self.featureExtractors.append(MarioFeatureExtractor())
         self.featureExtractors.append(FrontFeatureExtractor())
         self.featureExtractors.append(PitFeatureExtractor())
 
@@ -25,7 +25,7 @@ class FeatureAgent(QLearnAgent):
             window_size=self.windowsize,
             num_actions=len(self.actions),
             optimizer='adam',
-            lr=0.01,
+            lr=0.001,
             decay_step=1000,
             decay_rate=1,
             regularization=0.01

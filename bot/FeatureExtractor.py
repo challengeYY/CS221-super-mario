@@ -46,12 +46,18 @@ class VelocityFeatureExtractor(FeatureExtractor):
         feature['velocity'] = v
 
 class MarioFeatureExtractor(FeatureExtractor):
-    def featureSize(self): return 2
+    def featureSize(self): return 3
     def extract(self, feature, window):
         # extract x, y coordinate of Mario
         last_state = window[-1]
         obs = get_obs(last_state)
-        marioy, mariox = get_mario_coord(obs)
+        coord = get_mario_coord(obs)
+        if coord is None:
+            marioy, mariox = (0,0)
+            feature['has_mario'] = 0
+        else:
+            marioy, mariox = coord
+            feature['has_mario'] = 1
         feature['marioy'] = marioy
         feature['mariox'] = mariox
 
