@@ -46,7 +46,7 @@ def main():
             if options.player == 'human':
                 sleep(0.1)
             total_reward = 0
-            for i in range(10):
+            for i in range(6):
                 obs, reward, is_finished, info = env.step(action)
                 total_reward += reward
             print "reward: {}".format(total_reward)

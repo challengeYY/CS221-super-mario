@@ -4,7 +4,7 @@ from util import *
 
 
 class QLearningAlgorithm():
-    def __init__(self, options, actions, discount, featureExtractor, windowsize):
+    def __init__(self, options, actions, discount, featureExtractor, windowsize, explorationRate):
         self.actions = actions
         self.discount = discount
         self.featureExtractor = featureExtractor
@@ -16,6 +16,7 @@ class QLearningAlgorithm():
         self.batchcounter = 0
         self.options = options
         self.model = None
+        self.explorationRate = explorationRate
 
     def set_model(self, model):
         self.model = model
@@ -37,28 +38,20 @@ class QLearningAlgorithm():
     def getAction(self, state):
         rand = random.random()
         actionIdx = 0
-        if self.options.isTrain:
-            if self.windowsize > 1:
-                probs = self.getProb(self.statecache[-self.windowsize + 1:] + [state])
-                actionIdx = random.choice(range(len(self.actions)),
-                                          p=probs)
-                print "randomly select action id: {}".format(actionIdx)
-                print "Probs: {}".format(probs)
-            else:
-                probs = self.getProb([state])
-                actionIdx = random.choice(range(len(self.actions)), p=probs)
-                print "randomly select action id: {}".format(actionIdx)
-                print "Probs: {}".format(probs)
+        if random.random() < self.explorationRate:
+            actionIdx = random.choice(range(len(self.actions)))
+            print "randomly select action id: {}".format(actionIdx)
         elif len(self.statecache) < self.windowsize:
             actionIdx = self.actions.index('Right')
         else:
+            window = []
             if self.windowsize > 1:
-                actionIdx, q = max(enumerate(self.getQ(self.statecache[-self.windowsize + 1:] + [state])),
-                                   key=operator.itemgetter(1))
-                print "Q: {} best action id: {}".format(q, actionIdx)
+                window = self.statecache[-self.windowsize + 1:] + [state]
             else:
-                actionIdx, q = max(enumerate(self.getQ([state])), key=operator.itemgetter(1))
-                print "Q: {} best action id: {}".format(q, actionIdx)
+                window = [state]
+            allQs = self.getQ(window)
+            actionIdx, q = max(enumerate(allQs), key=operator.itemgetter(1))
+            print "Q: {} best action id: {}".format(allQs, actionIdx)
         return Action.act(self.actions[actionIdx]), actionIdx
 
     # Call this function to get the step size to update the weights.
@@ -98,7 +91,10 @@ class QLearningAlgorithm():
             Vopt = max(self.getQ([newState]))
             target = (reward + gamma * Vopt)
             if get_info(newState)['life'] == 0:
-                target = -1000
+                info = get_info(self.statecache[-1])
+                distance = info['distance']
+                time = info['time']
+                target = time-400-distance/2.0
             Y.append(target)
             print 'target: {}'.format(target)
-            self.model.update_weights(tiles,infos, actions, Y)
+            self.model.update_weights(tiles, infos, actions, Y)

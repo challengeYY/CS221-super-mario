@@ -23,6 +23,7 @@ class QLearnAgent(Agent):
             discount=1,
             featureExtractor=self.featureExtractor,
             windowsize=self.windowsize,
+            explorationRate=0.1
         )
 
     def featureExtractor(self, window, action):
@@ -34,7 +35,7 @@ class QLearnAgent(Agent):
     def act(self, obs, reward, is_finished, info):
         self.state = (obs, reward, is_finished, info)
 
-        if len(self.algo.statecache) >= 1 and self.isTrain:
+        if len(self.algo.statecache) >= 1:
             # prevState = self.algo.statecache[-1]
             prevAction = self.algo.actioncache[-1]
             self.algo.incorporateFeedback(prevAction, self.state)
