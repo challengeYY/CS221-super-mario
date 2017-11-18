@@ -4,40 +4,40 @@ from util import *
 
 
 class QLearningAlgorithm():
-    def __init__(self, options, actions, discount, featureExtractor, windowsize):
+    def __init__(self, options, actions, discount, featureExtractor):
         self.actions = actions
         self.discount = discount
         self.featureExtractor = featureExtractor
         self.updateInterval = 10 # number of frames to retrain the model
         self.updateCounter = 0
         self.batchSize = 20
-        self.windowsize = windowsize  # number of frames to look back in a state
-        self.statecache = [[]] # list of states for each game
+        self.statecache = [[]] # list of states for each game. A state is a window of frames
         self.actioncache = [[]] # list of actions for each game
         self.options = options
         self.model = None
+        self.explorationProb = 0.2
 
     def set_model(self, model):
         self.model = model
 
     # Return the Q function associated with the weights and features
-    def getQ(self, window):
+    def getQ(self, state):
         if self.model.conv:
-            tile, info = self.featureExtractor(window)
+            tile, info = self.featureExtractor(state)
             scores = self.model.inference_Q([info], tile=[tile])[0]
         else:
-            info = self.featureExtractor(window)
+            info = self.featureExtractor(state)
             if info is None:
                 return [0]
             scores = self.model.inference_Q([info])[0]
         return scores
 
-    def getProb(self, window):
+    def getProb(self, state):
         if self.model.conv:
-            tile, info = self.featureExtractor(window)
+            tile, info = self.featureExtractor(state)
             scores = self.model.inference_Prob([info], tile=[tile])[0]
         else:
-            info = self.featureExtractor(window)
+            info = self.featureExtractor(state)
             if info is None:
                 return [1.0/len(self.actions)] * len(self.actions)
             scores = self.model.inference_Prob([info])[0]
@@ -47,30 +47,20 @@ class QLearningAlgorithm():
     # Here we use the epsilon-greedy algorithm: with probability
     # |explorationProb|, take a random action.
     def getAction(self, state):
-        rand = random.random()
         actionIdx = 0
         if self.options.isTrain:
-            if self.windowsize > 1:
-                probs = self.getProb(self.statecache[-1][-self.windowsize + 1:] + [state])
-                actionIdx = random.choice(range(len(self.actions)),
-                                          p=probs)
-                print "randomly select action id: {}".format(actionIdx)
-                print "Probs: {}".format(probs)
+            rand = random.random()
+            if rand < self.explorationProb:
+                probs = [1.0 / len(self.actions)] * len(self.actions) # uniform probability 
             else:
-                probs = self.getProb([state])
-                actionIdx = random.choice(range(len(self.actions)), p=probs)
-                print "randomly select action id: {}".format(actionIdx)
-                print "Probs: {}".format(probs)
-        elif len(self.statecache[-1]) < self.windowsize:
-            actionIdx = self.actions.index('Right')
+                probs = self.getProb(state) # soft max prob
+            actionIdx = random.choice(range(len(self.actions)),
+                                      p=probs)
+            print "randomly select action id: {}".format(actionIdx)
+            print "Probs: {}".format(probs)
         else:
-            if self.windowsize > 1:
-                actionIdx, q = max(enumerate(self.getQ(self.statecache[-1][-self.windowsize + 1:] + [state])),
-                                   key=operator.itemgetter(1))
-                print "Q: {} best action id: {}".format(q, actionIdx)
-            else:
-                actionIdx, q = max(enumerate(self.getQ([state])), key=operator.itemgetter(1))
-                print "Q: {} best action id: {}".format(q, actionIdx)
+            actionIdx, q = max(enumerate(self.getQ(state)), key=operator.itemgetter(1))
+            print "Q: {} best action id: {}".format(q, actionIdx)
         return Action.act(self.actions[actionIdx]), actionIdx
 
     # Call this function to get the step size to update the weights.
@@ -79,34 +69,23 @@ class QLearningAlgorithm():
         # randomly choose a game
         gameIdx = random.randint(0, len(self.statecache)) 
         # Should have cache of s0, a0, ....., sn, an, sn+1, where reward of an is stored in sn+1
-        gameFrames = self.statecache[gameIdx]
+        gameStates = self.statecache[gameIdx]
         gameActions = self.actioncache[gameIdx]
-        assert(len(gameFrames) == len(gameActions) + 1)
 
-        if len(gameActions) < self.windowsize:
-            return self.sample() # resample a different game
+        # randomly choose a state except last one in the game
+        stateIdx = random.randint(0, len(gameStates)-1) if len(gameStates) > 1 else 0
 
-        # randomly choose index for last frame in the window 
-        if len(gameActions) == self.windowsize:
-            frameIdx = len(gameActions)
-        else:
-            frameIdx = random.randint(self.windowsize, len(gameActions))
-
-        window = gameFrames[frameIdx - self.windowsize:frameIdx]
+        state_n = gameStates[stateIdx]
         if self.model.conv:
-            tile, info = self.featureExtractor(window)
+            tile, info = self.featureExtractor(state_n)
         else:
             tile = None
-            info = self.featureExtractor(window)
-        action = gameActions[frameIdx]
+            info = self.featureExtractor(state_n)
+        action = gameActions[stateIdx]
 
-        frame_np1 = gameFrames[frameIdx+1]
-        if get_info(frame_np1)['life'] == 0:
-            reward = -100000
-        else:
-            reward = get_reward(frame_np1)
-        window_np1 = gameFrames[frameIdx - self.windowsize + 1 : frameIdx + 1]
-        Vopt = max(self.getQ(window_np1))
+        state_np1 = gameStates[stateIdx+1]
+        reward = get_reward(state_np1[-1])
+        Vopt = max(self.getQ(state_np1))
         gamma = self.discount
         target = (reward + gamma * Vopt)
 

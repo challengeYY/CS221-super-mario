@@ -47,16 +47,14 @@ def main():
     try:
         action = agent.initAction()
         while not agent.exit():
-            if options.player == 'human':
-                sleep(0.1)
-            total_reward = 0
-            for i in range(10):
-                obs, reward, is_finished, info = env.step(action)
-                total_reward += reward
-            print "reward: {}".format(total_reward)
+            # if options.player == 'human': # this is added in act of HumanAgent
+                # sleep(0.1)
+            obs, reward, is_finished, info = env.step(action)
+            if is_finished and info['life'] == 0:
+                reward = -100000
             if options.render:
                 env.render()
-            action = agent.act(obs, total_reward, is_finished, info)
+            action = agent.act(obs, reward, is_finished, info)
     except Exception as e:
         agent.handle(e)
 
