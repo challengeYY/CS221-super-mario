@@ -98,10 +98,7 @@ class QModel(object):
                 h_1 = tf.layers.dense(self.placeholders['info'], 32, activation=tf.nn.relu,
                                       kernel_regularizer=tf.contrib.layers.l2_regularizer(self.regularization),
                                       kernel_initializer=tf.contrib.layers.xavier_initializer())
-            h_2 = tf.layers.dense(h_1, 32, activation=tf.nn.relu,
-                                  kernel_regularizer=tf.contrib.layers.l2_regularizer(self.regularization),
-                                  kernel_initializer=tf.contrib.layers.xavier_initializer())
-            return (tf.layers.dense(h_2, self.numActions, activation=None,
+            return (tf.layers.dense(h_1, self.numActions, activation=None,
                                     kernel_regularizer=tf.contrib.layers.l2_regularizer(self.regularization),
                                     kernel_initializer=tf.contrib.layers.xavier_initializer()),
                     tf.contrib.framework.get_variables(variable_scope))
