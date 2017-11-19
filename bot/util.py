@@ -34,6 +34,10 @@ def get_reward(state):
     obs, reward, is_finished, info = state
     return reward
 
+def set_reward(state, newReward):
+    obs, reward, is_finished, info = state
+    return obs, newReward, is_finished, info
+
 def get_obs(state):
     obs, reward, is_finished, info = state
     return obs
