@@ -27,6 +27,7 @@ class QLearnAgent(Agent):
         )
         self.stepCounter = 0
         self.stepCounterMax = 5
+        self.totalReward = 0
 
     def featureExtractor(self, window, action):
         raise Exception('Abstract method! should be overridden')
@@ -34,21 +35,30 @@ class QLearnAgent(Agent):
     def initAction(self):
         return self.action
 
+    def cacheState(self):
+        state = self.framecache[-self.windowsize:]
+        last_frame = state[-1]
+        last_frame = set_reward(last_frame, self.totalReward)
+        state = state[:-1] + [last_frame]
+        self.totalReward = 0
+        self.algo.statecache[-1].append(state)
+        return state
+
     def act(self, obs, reward, is_finished, info):
         self.frame = (np.copy(obs), reward, is_finished, info.copy())
+        self.totalReward += reward
 
         # caching new frame
         self.framecache.append(self.frame)
 
-        if len(self.framecache) > (self.windowsize + 3):
+        if len(self.framecache) > self.windowsize:
             self.framecache.pop(0) # remove frame outside window to save memory
 
         # only update state and action once a while
         self.stepCounter += 1 
         if self.stepCounter < self.stepCounterMax:
-            if is_finished:
-                state = self.framecache[-self.windowsize:]
-                self.algo.statecache[-1].append(state)
+            if is_finished: 
+                state = self.cacheState()
             return self.action
 
         # if not enough frame for a window, keep playing 
@@ -58,8 +68,7 @@ class QLearnAgent(Agent):
         self.stepCounter = 0
 
         # caching new state
-        state = self.framecache[-self.windowsize:]
-        self.algo.statecache[-1].append(state)
+        state = self.cacheState()
 
         self.algo.incorporateFeedback()
 
@@ -83,6 +92,7 @@ class QLearnAgent(Agent):
             self.framecache = []
             self.algo.actioncache.append([])
             self.algo.statecache.append([])
+            self.totalReward = 0
             if len(self.algo.statecache) > self.maxCache:
                 self.algo.actioncache.pop(0)
                 self.algo.statecache.pop(0)
