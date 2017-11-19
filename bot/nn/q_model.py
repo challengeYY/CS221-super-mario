@@ -74,37 +74,34 @@ class QModel(object):
         """
         with tf.variable_scope(variable_scope, initializer=tf.uniform_unit_scaling_initializer(1.0)):
             if self.conv:
-                conv_1 = tf.layers.conv2d(self.placeholders['tile'], 32, 3, activation=tf.nn.relu,
+                conv_1 = tf.layers.conv2d(self.placeholders['tile'], 8, 3, activation=tf.nn.relu,
                                           kernel_regularizer=tf.contrib.layers.l2_regularizer(self.regularization),
                                           kernel_initializer=tf.contrib.layers.xavier_initializer(),
                                           bias_initializer=tf.constant_initializer(0))
                 pool_1 = tf.layers.max_pooling2d(conv_1, 2, 2)
                 conv_2 = tf.contrib.layers.flatten(
-                    tf.layers.conv2d(pool_1, 64, 3, activation=tf.nn.relu,
+                    tf.layers.conv2d(pool_1, 16, 3, activation=tf.nn.relu,
                                      kernel_regularizer=tf.contrib.layers.l2_regularizer(
                                          self.regularization),
                                      kernel_initializer=tf.contrib.layers.xavier_initializer(),
                                      bias_initializer=tf.constant_initializer(0)))
-                h_1 = tf.layers.dense(tf.concat([conv_2, self.placeholders['info']], 1), 256, activation=tf.nn.relu,
+                conv_out = tf.layers.dense(conv_2, 128, activation=tf.nn.relu,
+                                           kernel_regularizer=tf.contrib.layers.l2_regularizer(self.regularization),
+                                           kernel_initializer=tf.contrib.layers.xavier_initializer())
+                h_0 = tf.layers.dense(self.placeholders['info'], 16, activation=tf.nn.relu,
                                       kernel_regularizer=tf.contrib.layers.l2_regularizer(self.regularization),
                                       kernel_initializer=tf.contrib.layers.xavier_initializer())
-                h_2 = tf.layers.dense(h_1, 256, activation=tf.nn.relu,
-                                      kernel_regularizer=tf.contrib.layers.l2_regularizer(self.regularization),
-                                      kernel_initializer=tf.contrib.layers.xavier_initializer())
-                h_3 = tf.layers.dense(h_2, 128, activation=tf.nn.relu,
-                                      kernel_regularizer=tf.contrib.layers.l2_regularizer(self.regularization),
-                                      kernel_initializer=tf.contrib.layers.xavier_initializer())
-                h_4 = tf.layers.dense(h_3, 64, activation=tf.nn.relu,
+                h_1 = tf.layers.dense(tf.concat([conv_out, h_0], axis=1), 128, activation=tf.nn.relu,
                                       kernel_regularizer=tf.contrib.layers.l2_regularizer(self.regularization),
                                       kernel_initializer=tf.contrib.layers.xavier_initializer())
             else:
-                h_4 = tf.layers.dense(self.placeholders['info'], 32, activation=tf.nn.relu,
+                h_1 = tf.layers.dense(self.placeholders['info'], 32, activation=tf.nn.relu,
                                       kernel_regularizer=tf.contrib.layers.l2_regularizer(self.regularization),
                                       kernel_initializer=tf.contrib.layers.xavier_initializer())
-            h_5 = tf.layers.dense(h_4, 32, activation=tf.nn.relu,
+            h_2 = tf.layers.dense(h_1, 32, activation=tf.nn.relu,
                                   kernel_regularizer=tf.contrib.layers.l2_regularizer(self.regularization),
                                   kernel_initializer=tf.contrib.layers.xavier_initializer())
-            return (tf.layers.dense(h_5, self.numActions, activation=tf.nn.relu,
+            return (tf.layers.dense(h_2, self.numActions, activation=None,
                                     kernel_regularizer=tf.contrib.layers.l2_regularizer(self.regularization),
                                     kernel_initializer=tf.contrib.layers.xavier_initializer()),
                     tf.contrib.framework.get_variables(variable_scope))
