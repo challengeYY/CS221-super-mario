@@ -9,7 +9,7 @@ class QLearningAlgorithm():
         self.discount = discount
         self.featureExtractor = featureExtractor
         self.updateInterval = 10  # number of frames to retrain the model
-        self.updateTargetInterval = 10  # number of frames to retrain the model
+        self.updateTargetInterval = 20  # number of frames to retrain the model
         self.updateCounter = 0
         self.updateTargetCounter = 0
         self.batchSize = 20
@@ -18,6 +18,7 @@ class QLearningAlgorithm():
         self.options = options
         self.model = None
         self.explorationProb = 0.20
+        self.softmaxExplore = options.softmaxExploration
 
     def set_model(self, model):
         self.model = model
@@ -56,9 +57,14 @@ class QLearningAlgorithm():
                 actionIdx = random.choice(range(len(self.actions)))
                 print "randomly select action id: {}".format(actionIdx)
             else:
-                q = self.getQ(self.model.prediction_vs, state)
-                actionIdx, _ = max(enumerate(q), key=operator.itemgetter(1))
-                print "Q: {} best action id: {}".format(q, actionIdx)
+                if self.softmaxExplore:
+                    prob = self.getProb(state)
+                    actionIdx = random.choice(range(len(self.actions)), p=prob)
+                    print "Prob: {} selected action id: {}".format(prob, actionIdx)
+                else:
+                    q = self.getQ(self.model.prediction_vs, state)
+                    actionIdx, _ = max(enumerate(q), key=operator.itemgetter(1))
+                    print "Q: {} best action id: {}".format(q, actionIdx)
         # probs = self.getProb(state)  # soft max prob
         #    actionIdx = random.choice(range(len(self.actions)),
         #                              p=probs)

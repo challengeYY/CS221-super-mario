@@ -29,7 +29,7 @@ class FeatureAgent(QLearnAgent):
             lr=1e-4,
             decay_step=1000,
             decay_rate=1,
-            regularization=0.0
+            regularization=0.005
         )
         self.model.initialize_model(options.model_dir)
         self.algo.set_model(self.model)

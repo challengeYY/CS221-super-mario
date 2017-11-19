@@ -6,14 +6,16 @@ from enum import *
 from util import *
 from QLearnAlgo import *
 
+
 class QLearnAgent(Agent):
     def __init__(self, options, env):
         self.action = Action.act('Right')
         self.frame = None
         self.maxGameIter = options.maxGameIter
         self.windowsize = options.windowsize
-        self.framecache = [] # list of frames for each game, cleared at the end of the game
+        self.framecache = []  # list of frames for each game, cleared at the end of the game
         self.gameIter = 0
+        self.bestScore = 0
         self.maxCache = options.maxCache
         self.isTrain = options.isTrain
         self.env = env
@@ -26,7 +28,7 @@ class QLearnAgent(Agent):
             featureExtractor=self.featureExtractor
         )
         self.stepCounter = 0
-        self.stepCounterMax = 5
+        self.stepCounterMax = 4
         self.totalReward = 0
 
     def featureExtractor(self, window, action):
@@ -52,12 +54,12 @@ class QLearnAgent(Agent):
         self.framecache.append(self.frame)
 
         if len(self.framecache) > self.windowsize:
-            self.framecache.pop(0) # remove frame outside window to save memory
+            self.framecache.pop(0)  # remove frame outside window to save memory
 
         # only update state and action once a while
-        self.stepCounter += 1 
+        self.stepCounter += 1
         if self.stepCounter < self.stepCounterMax:
-            if is_finished: 
+            if is_finished:
                 state = self.cacheState()
             return self.action
 
@@ -87,16 +89,23 @@ class QLearnAgent(Agent):
         if self.frame is None:
             return False
         if is_finished(self.frame):
+            frame_info= get_info(self.frame)
+            if 'distance' in frame_info:
+                distance = frame_info['distance']
+                if self.bestScore < distance:
+                    self.bestScore = distance
+                    print "Best Score: {}".format(self.bestScore)
+                print "Score: {}".format(distance)
             self.gameIter += 1
             self.env.reset()
             self.framecache = []
             self.algo.actioncache.append([])
             self.algo.statecache.append([])
             self.totalReward = 0
+
             if len(self.algo.statecache) > self.maxCache:
                 self.algo.actioncache.pop(0)
                 self.algo.statecache.pop(0)
-
 
         info = get_info(self.frame)
         stuck = False

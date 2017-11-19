@@ -54,9 +54,9 @@ class QModel(object):
         self.scope_vars = {}
         self.prediction_vs = 'prediction_network'
         self.target_vs = 'target_network'
-        self.predicted_Q[self.prediction_vs], self.scope_vars[self.prediction_vs] = self.create_model(
-            self.prediction_vs)
-        self.predicted_Q[self.target_vs], self.scope_vars[self.target_vs] = self.create_model(self.target_vs)
+        (self.predicted_Q[self.prediction_vs], self.predicted_prob,
+         self.scope_vars[self.prediction_vs]) = self.create_model(self.prediction_vs)
+        self.predicted_Q[self.target_vs], _, self.scope_vars[self.target_vs] = self.create_model(self.target_vs)
         self.setup_target_update(self.prediction_vs, self.target_vs)
         self.setup_loss()
         self.setup_train(lr, decay_step, decay_rate, optimizer)
@@ -74,7 +74,8 @@ class QModel(object):
         """
         with tf.variable_scope(variable_scope, initializer=tf.uniform_unit_scaling_initializer(1.0)):
             if self.conv:
-                conv_1 = tf.layers.conv2d(self.placeholders['tile'], 8, 3, activation=tf.nn.relu,
+                conv_in = tf.squeeze(tf.one_hot(tf.cast(self.placeholders['tile'] - 1, tf.uint8), 4, axis=-1), axis=3)
+                conv_1 = tf.layers.conv2d(conv_in, 8, 5, activation=tf.nn.relu,
                                           kernel_regularizer=tf.contrib.layers.l2_regularizer(self.regularization),
                                           kernel_initializer=tf.contrib.layers.xavier_initializer(),
                                           bias_initializer=tf.constant_initializer(0))
@@ -95,12 +96,19 @@ class QModel(object):
                                       kernel_regularizer=tf.contrib.layers.l2_regularizer(self.regularization),
                                       kernel_initializer=tf.contrib.layers.xavier_initializer())
             else:
-                h_1 = tf.layers.dense(self.placeholders['info'], 32, activation=tf.nn.relu,
+                h_0 = tf.layers.dense(self.placeholders['info'], 32, activation=tf.nn.relu,
                                       kernel_regularizer=tf.contrib.layers.l2_regularizer(self.regularization),
                                       kernel_initializer=tf.contrib.layers.xavier_initializer())
-            return (tf.layers.dense(h_1, self.numActions, activation=None,
-                                    kernel_regularizer=tf.contrib.layers.l2_regularizer(self.regularization),
-                                    kernel_initializer=tf.contrib.layers.xavier_initializer()),
+                h_0 = tf.layers.dense(h_0, 32, activation=tf.nn.relu,
+                                      kernel_regularizer=tf.contrib.layers.l2_regularizer(self.regularization),
+                                      kernel_initializer=tf.contrib.layers.xavier_initializer())
+                h_1 = tf.layers.dense(h_0, 32, activation=tf.nn.relu,
+                                      kernel_regularizer=tf.contrib.layers.l2_regularizer(self.regularization),
+                                      kernel_initializer=tf.contrib.layers.xavier_initializer())
+            out = tf.layers.dense(h_1, self.numActions, activation=None,
+                                  kernel_regularizer=tf.contrib.layers.l2_regularizer(self.regularization),
+                                  kernel_initializer=tf.contrib.layers.xavier_initializer())
+            return (out, tf.nn.softmax(out),
                     tf.contrib.framework.get_variables(variable_scope))
 
     def setup_tensorboard(self):
@@ -173,7 +181,7 @@ class QModel(object):
         feed_dict = {self.placeholders['info']: info}
         if self.conv:
             feed_dict[self.placeholders['tile']] = tile
-        prob = self.sess.run(self.soft_max_selection, feed_dict=feed_dict)
+        prob = self.sess.run(self.predicted_prob, feed_dict=feed_dict)
         return prob
 
     def update_weights(self, infos, actions, target_Qs, tiles=None):

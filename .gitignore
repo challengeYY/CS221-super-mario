@@ -3,6 +3,7 @@
 *.py~
 .DS_Store
 nohup.out
+log.txt
 
 # Tensorflow
 /model/

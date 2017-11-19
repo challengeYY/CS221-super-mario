@@ -16,12 +16,14 @@ def main():
                         help='Do not render visualization of the game')
     parser.add_argument('--maxGameIter', dest='maxGameIter', nargs='?', default=1, type=int,
                         help='Max number of training iteration')
-    parser.add_argument('--maxCache', dest='maxCache', nargs='?', default=20, type=int,
+    parser.add_argument('--maxCache', dest='maxCache', nargs='?', default=50, type=int,
                         help='Max number of training iteration')
     parser.add_argument('--window', dest='windowsize', nargs='?', default=3, type=int,
                         help='Number of states (including current) used to train')
     parser.add_argument('--train', dest='isTrain', action='store_true', default=False,
                         help='Training mode')
+    parser.add_argument('--softmaxExploration', dest='softmaxExploration', action='store_true', default=False,
+                        help='Exploration mode')
     (options, args) = parser.parse_known_args()
 
     env = gym.make('ppaquette/SuperMarioBros-1-1-Tiles-v0')
