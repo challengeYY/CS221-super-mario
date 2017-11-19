@@ -73,7 +73,8 @@ class FrontFeatureExtractor(FeatureExtractor):
                 feature['ahead_{}_height'.format(i)] = 0
             else:
                 hor_y, hor_x = horizontal_tile
-                for j in range(5):
+                feature['ahead_{}_height'.format(i)] = Window.Height
+                for j in range(Window.Height):
                     if obs[hor_y-j, hor_x] == Tile.EMPTY_SPACE:
                         feature['ahead_{}_height'.format(i)] = j
                         break
@@ -90,7 +91,8 @@ class BehindFeatureExtractor(FeatureExtractor):
                 feature['behind_{}_height'.format(i)] = 0
             else:
                 hor_y, hor_x = horizontal_tile
-                for j in range(5):
+                feature['behind_{}_height'.format(i)] = Window.Height
+                for j in range(Window.Height):
                     if obs[hor_y-j, hor_x] == Tile.EMPTY_SPACE:
                         feature['behind_{}_height'.format(i)] = j
                         break

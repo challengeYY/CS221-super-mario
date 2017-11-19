@@ -17,7 +17,7 @@ class QLearningAlgorithm():
         self.actioncache = [[]]  # list of actions for each game
         self.options = options
         self.model = None
-        self.explorationProb = 0.20
+        self.explorationProb = 0.10
         self.softmaxExplore = options.softmaxExploration
 
     def set_model(self, model):
