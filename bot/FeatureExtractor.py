@@ -3,6 +3,7 @@ from abc import ABCMeta, abstractmethod
 import traceback
 from enum import *
 from util import *
+from itertools import chain
 
 
 class FeatureExtractor:
@@ -121,3 +122,18 @@ class PitFeatureExtractor(FeatureExtractor):
                 if not out_of_frame(mariox + i, marioy + 1) and obs[marioy + 1, mariox + i] == Tile.EMPTY_SPACE:
                     feature['pit_ahead'] = 1
                     break
+
+
+class PrevActionsFeatureExtractor(FeatureExtractor):
+    def __init__(self, prevActionsSize):
+        self.prevActionsSize = prevActionsSize
+
+    def featureSize(self):
+        return len(Action.NAME) * self.prevActionsSize
+
+    def extract(self, feature, state):
+        # extract x, y coordinate of Mario
+        prevActions = chain.from_iterable(state.get_prev_actions())
+
+        for i, actionBit in enumerate(prevActions):
+            feature['prevActionBit-{}'.format(i)] = actionBit

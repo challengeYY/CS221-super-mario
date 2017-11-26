@@ -13,9 +13,10 @@ class QLearningAlgorithm():
         self.updateCounter = 0
         self.updateTargetCounter = 0
         self.batchSize = 20
-        self.batchPerFeedback = 20
+        self.batchPerFeedback = 5
         self.statecache = [[]]  # list of states for each game. A state is a window of frames
         self.actioncache = [[]]  # list of actions for each game
+        self.actioncacheSize = [0]  # list of actions for each game
         self.options = options
         self.model = None
         self.explorationProb = 0.05
@@ -78,36 +79,42 @@ class QLearningAlgorithm():
 
     # Call this function to get the step size to update the weights.
 
-    def sample(self):
-        # randomly choose a game
-        gameIdx = random.randint(0, len(self.statecache))
-        # Should have cache of s0, a0, ....., sn, an, sn+1, where reward of an is stored in sn+1
-        gameStates = self.statecache[gameIdx]
-        gameActions = self.actioncache[gameIdx]
+    def sample(self, sampleSize):
+        # randomly choose a game and get its states
+        samples = []
+        gameLenSum = float(sum(self.actioncacheSize))
+        gameProb = [length / gameLenSum for length in self.actioncacheSize]
+        for i in range(sampleSize):
+            gameIdx = random.choice(range(0, len(self.statecache)), p=gameProb)
+            # Should have cache of s0, a0, ....., sn, an, sn+1, where reward of an is stored in sn+1
+            gameStates = self.statecache[gameIdx]
+            gameActions = self.actioncache[gameIdx]
 
-        if len(gameActions) == 0:
-            return self.sample()  # resample a different game
+            if len(gameActions) == 0:
+                return self.sample()  # resample a different game
 
-        # randomly choose a state except last one in the game
-        stateIdx = random.randint(0, len(gameActions)) if len(gameActions) > 1 else 0
+            # randomly choose a state except last one in the game
+            stateIdx = random.randint(0, len(gameActions)) if len(gameActions) > 1 else 0
 
-        state_n = gameStates[stateIdx]
-        if self.model.conv:
-            tile, info = self.featureExtractor(state_n)
-        else:
-            tile = None
-            info = self.featureExtractor(state_n)
-        action = gameActions[stateIdx]
+            state_n = gameStates[stateIdx]
+            if self.model.conv:
+                tile, info = self.featureExtractor(state_n)
+            else:
+                tile = None
+                info = self.featureExtractor(state_n)
+            action = gameActions[stateIdx]
 
-        state_np1 = gameStates[stateIdx + 1]
-        reward = state_np1.get_last_frame().get_reward()
-        Vopt = max(self.getQ(self.model.target_vs, state_np1))
-        gamma = self.discount
-        target = (reward + gamma * Vopt)
-        if state_np1.get_last_frame().get_info()['life'] == 0:
-            target = reward
+            state_np1 = gameStates[stateIdx + 1]
+            reward = state_np1.get_last_frame().get_reward()
+            Vopt = max(self.getQ(self.model.target_vs, state_np1))
+            gamma = self.discount
+            target = (reward + gamma * Vopt)
+            if state_np1.get_last_frame().get_info()['life'] == 0:
+                target = reward
 
-        return tile, info, action, target
+            samples.append((tile, info, action, target))
+
+        return samples
 
     # once a while train the model
     def incorporateFeedback(self):
@@ -124,8 +131,8 @@ class QLearningAlgorithm():
             infos = []
             actions = []
             target_Qs = []
-            for i in range(self.batchSize):
-                tile, info, action, target = self.sample()
+            samples = self.sample(self.batchSize)
+            for tile, info, action, target in samples:
                 tiles.append(tile)
                 infos.append(info)
                 actions.append(action)
