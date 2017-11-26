@@ -13,6 +13,7 @@ class QLearningAlgorithm():
         self.updateCounter = 0
         self.updateTargetCounter = 0
         self.batchSize = 20
+        self.batchPerFeedback = 20
         self.statecache = [[]]  # list of states for each game. A state is a window of frames
         self.actioncache = [[]]  # list of actions for each game
         self.options = options
@@ -118,18 +119,19 @@ class QLearningAlgorithm():
         self.updateCounter = 0
 
         print('incorporateFeedback ...')
-        tiles = []  # a list of None if self.mode.conv is False
-        infos = []
-        actions = []
-        target_Qs = []
-        for i in range(self.batchSize):
-            tile, info, action, target = self.sample()
-            tiles.append(tile)
-            infos.append(info)
-            actions.append(action)
-            target_Qs.append(target)
+        for i in range(self.batchPerFeedback):
+            tiles = []  # a list of None if self.mode.conv is False
+            infos = []
+            actions = []
+            target_Qs = []
+            for i in range(self.batchSize):
+                tile, info, action, target = self.sample()
+                tiles.append(tile)
+                infos.append(info)
+                actions.append(action)
+                target_Qs.append(target)
 
-        self.model.update_weights(tiles=tiles, infos=infos, actions=actions, target_Qs=target_Qs)
+            self.model.update_weights(tiles=tiles, infos=infos, actions=actions, target_Qs=target_Qs)
 
         self.updateTargetCounter += 1
         if self.updateTargetCounter < self.updateTargetInterval:
