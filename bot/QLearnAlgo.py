@@ -18,7 +18,7 @@ class QLearningAlgorithm():
         self.actioncache = [[]]  # list of actions for each game
         self.options = options
         self.model = None
-        self.explorationProb = 0.10
+        self.explorationProb = 0.05
         self.softmaxExplore = options.softmaxExploration
 
     def set_model(self, model):
@@ -100,11 +100,11 @@ class QLearningAlgorithm():
         action = gameActions[stateIdx]
 
         state_np1 = gameStates[stateIdx + 1]
-        reward = get_reward(state_np1[-1])
+        reward = state_np1.get_last_frame().get_reward()
         Vopt = max(self.getQ(self.model.target_vs, state_np1))
         gamma = self.discount
         target = (reward + gamma * Vopt)
-        if get_info(state_np1[-1])['life'] == 0:
+        if state_np1.get_last_frame().get_info()['life'] == 0:
             target = reward
 
         return tile, info, action, target

@@ -30,31 +30,46 @@ def get_coord_from_mario(obs, step_x, step_y):
         return None
     return focusy, focusx
 
-def get_reward(state):
-    obs, reward, is_finished, info = state
-    return reward
+class GameState(object):
+    def __init__(self, frames):
+        self.frames = frames
 
-def set_reward(state, newReward):
-    obs, reward, is_finished, info = state
-    return obs, newReward, is_finished, info
+    def get_frames(self):
+        return self.frames
 
-def get_obs(state):
-    obs, reward, is_finished, info = state
-    return obs
+    def get_last_frame(self):
+        return self.frames[-1]
 
-def is_finished(state):
-    obs, reward, is_finished, info = state
-    return is_finished
 
-def get_info(state):
-    obs, reward, is_finished, info = state
-    return info
+
+class GameFrame(object):
+    def __init__(self, obs, reward, is_finished, info):
+        self.obs = obs
+        self.reward = reward
+        self.is_finished = is_finished
+        self.info = info
+
+    def get_reward(self):
+        return self.reward
+
+    def set_reward(self, newReward):
+        self.reward = newReward
+        return self
+
+    def get_obs(self):
+        return self.obs
+
+    def get_is_finished(self):
+        return self.is_finished
+
+    def get_info(self):
+        return self.info
 
 # get mario's velocity from state1 to state2
 def get_velocity(state1, state2):
     # 13 x 16 numpy array
-    obs1 = get_obs(state1)
-    obs2 = get_obs(state2)
+    obs1 = state1.get_obs()
+    obs2 = state2.get_obs()
     min_diff = float('inf')
     for v in range(3):
         shifted_obs1 = np.roll(obs1, v, axis=1)

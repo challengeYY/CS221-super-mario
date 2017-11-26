@@ -75,18 +75,17 @@ class QModel(object):
         with tf.variable_scope(variable_scope, initializer=tf.uniform_unit_scaling_initializer(1.0)):
             if self.conv:
                 conv_in = tf.squeeze(tf.one_hot(tf.cast(self.placeholders['tile'] - 1, tf.uint8), 4, axis=-1), axis=3)
-                conv_1 = tf.layers.conv2d(conv_in, 8, 5, activation=tf.nn.relu,
+                conv_1 = tf.layers.conv2d(conv_in, 64, 4, activation=tf.nn.relu,
                                           kernel_regularizer=tf.contrib.layers.l2_regularizer(self.regularization),
                                           kernel_initializer=tf.contrib.layers.xavier_initializer(),
                                           bias_initializer=tf.constant_initializer(0))
-                pool_1 = tf.layers.max_pooling2d(conv_1, 2, 2)
                 conv_2 = tf.contrib.layers.flatten(
-                    tf.layers.conv2d(pool_1, 16, 3, activation=tf.nn.relu,
+                    tf.layers.conv2d(conv_1, 64, 3, activation=tf.nn.relu,
                                      kernel_regularizer=tf.contrib.layers.l2_regularizer(
                                          self.regularization),
                                      kernel_initializer=tf.contrib.layers.xavier_initializer(),
                                      bias_initializer=tf.constant_initializer(0)))
-                conv_out = tf.layers.dense(conv_2, 128, activation=tf.nn.relu,
+                conv_out = tf.layers.dense(conv_2, 512, activation=tf.nn.relu,
                                            kernel_regularizer=tf.contrib.layers.l2_regularizer(self.regularization),
                                            kernel_initializer=tf.contrib.layers.xavier_initializer())
                 h_0 = tf.layers.dense(self.placeholders['info'], 16, activation=tf.nn.relu,

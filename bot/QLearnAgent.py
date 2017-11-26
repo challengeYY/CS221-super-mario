@@ -38,16 +38,16 @@ class QLearnAgent(Agent):
         return self.action
 
     def cacheState(self):
-        state = self.framecache[-self.windowsize:]
-        last_frame = state[-1]
-        last_frame = set_reward(last_frame, self.totalReward)
-        state = state[:-1] + [last_frame]
+        frames = self.framecache[-self.windowsize:]
+        last_frame = frames[-1]
+        last_frame = last_frame.set_reward(self.totalReward)
+        state = GameState(frames[:-1] + [last_frame])
         self.totalReward = 0
         self.algo.statecache[-1].append(state)
         return state
 
     def act(self, obs, reward, is_finished, info):
-        self.frame = (np.copy(obs), reward, is_finished, info.copy())
+        self.frame = GameFrame(np.copy(obs), reward, is_finished, info.copy())
         self.totalReward += reward
 
         # caching new frame
@@ -60,7 +60,7 @@ class QLearnAgent(Agent):
         self.stepCounter += 1
         if self.stepCounter < self.stepCounterMax:
             if is_finished:
-                state = self.cacheState()
+                self.cacheState()
             return self.action
 
         # if not enough frame for a window, keep playing 
@@ -88,8 +88,8 @@ class QLearnAgent(Agent):
     def exit(self):
         if self.frame is None:
             return False
-        if is_finished(self.frame):
-            frame_info= get_info(self.frame)
+        if self.frame.get_is_finished():
+            frame_info= self.frame.get_info()
             if 'distance' in frame_info:
                 distance = frame_info['distance']
                 if self.bestScore < distance:
@@ -107,7 +107,7 @@ class QLearnAgent(Agent):
                 self.algo.actioncache.pop(0)
                 self.algo.statecache.pop(0)
 
-        info = get_info(self.frame)
+        info = self.frame.get_info()
         stuck = False
         if 'ignore' in info:
             stuck = info['ignore']
@@ -115,7 +115,7 @@ class QLearnAgent(Agent):
         reachMaxIter = self.gameIter >= self.maxGameIter
 
         exit = reachMaxIter
-        exit = exit and (is_finished or stuck)
+        exit = exit and (self.frame.get_is_finished() or stuck)
         return exit
 
     def handle(self, e):
