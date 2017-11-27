@@ -15,7 +15,6 @@ class FeatureAgent(QLearnAgent):
         self.featureExtractors.append(FrontFeatureExtractor())
         self.featureExtractors.append(PitFeatureExtractor())
         self.featureExtractors.append(BehindFeatureExtractor())
-        self.featureExtractors.append(PrevActionsFeatureExtractor(self.prevActionsSize))
 
         self.tileFeatureExtractor = TileFeatureExtractor()
 

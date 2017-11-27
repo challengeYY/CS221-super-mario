@@ -14,15 +14,13 @@ class QLearnAgent(Agent):
         self.maxGameIter = options.maxGameIter
         self.windowsize = options.windowsize
         self.framecache = []  # list of frames for each game, cleared at the end of the game
-        self.prevActionsSize = 3
-        self.prevActions = [[0] * len(Action.NAME)] * self.prevActionsSize
         self.gameIter = 0
         self.bestScore = 0
         self.maxCache = options.maxCache
         self.isTrain = options.isTrain
         self.env = env
-        self.actions = [Action.NO_ACTION, 'Right', 'Left', 'A', ['Right', 'A'], ['Right', 'B'], ['Right', 'A', 'B'],
-                        ['Left', 'A'], ['Left', 'B'], ['Left', 'A', 'B']]
+        self.actions = ['Right', 'Left', 'A', ['Right', 'A'], ['Right', 'B'], ['Right', 'A', 'B'], ['Left', 'A'],
+                        ['Left', 'B'], ['Left', 'A', 'B']]
         self.algo = QLearningAlgorithm(
             options=options,
             actions=self.actions,
@@ -39,15 +37,11 @@ class QLearnAgent(Agent):
     def initAction(self):
         return self.action
 
-    def recordPrevAction(self, action):
-        self.prevActions.pop(0)
-        self.prevActions.append(action)
-
     def cacheState(self):
         frames = self.framecache[-self.windowsize:]
         last_frame = frames[-1]
         last_frame = last_frame.set_reward(self.totalReward)
-        state = GameState(frames[:-1] + [last_frame], self.prevActions)
+        state = GameState(frames[:-1] + [last_frame])
         self.totalReward = 0
         self.algo.statecache[-1].append(state)
         return state
@@ -87,9 +81,7 @@ class QLearnAgent(Agent):
             # get and cache new action 
             self.action, action_idx = self.algo.getAction(state)
             self.algo.actioncache[-1].append(action_idx)
-            self.algo.actioncacheSize[-1] += 1
 
-        self.recordPrevAction(self.action)
         self.log(self.action, reward)
         return self.action
 
@@ -97,7 +89,7 @@ class QLearnAgent(Agent):
         if self.frame is None:
             return False
         if self.frame.get_is_finished():
-            frame_info = self.frame.get_info()
+            frame_info= self.frame.get_info()
             if 'distance' in frame_info:
                 distance = frame_info['distance']
                 if self.bestScore < distance:
@@ -108,13 +100,11 @@ class QLearnAgent(Agent):
             self.env.reset()
             self.framecache = []
             self.algo.actioncache.append([])
-            self.algo.actioncacheSize.append(0)
             self.algo.statecache.append([])
             self.totalReward = 0
 
             if len(self.algo.statecache) > self.maxCache:
                 self.algo.actioncache.pop(0)
-                self.algo.actioncacheSize.pop(0)
                 self.algo.statecache.pop(0)
 
         info = self.frame.get_info()

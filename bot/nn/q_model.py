@@ -26,7 +26,7 @@ def get_optimizer(opt):
 
 class QModel(object):
     def __init__(self, info_size, num_actions, tile_row, tile_col, window_size, optimizer='adam', lr=0.01,
-                 decay_step=1000, decay_rate=1, regularization=0, conv=True, save_period=2000, gradient_clip=10):
+                 decay_step=1000, decay_rate=1, regularization=0, conv=True, save_period=500, gradient_clip=10):
         """
         Initializes your System
         :param stateVectorLength: Length of vector used to represent state and action.
@@ -75,7 +75,7 @@ class QModel(object):
         with tf.variable_scope(variable_scope, initializer=tf.uniform_unit_scaling_initializer(1.0)):
             if self.conv:
                 conv_in = tf.squeeze(tf.one_hot(tf.cast(self.placeholders['tile'] - 1, tf.uint8), 4, axis=-1), axis=3)
-                conv_1 = tf.layers.conv2d(conv_in, 64, 5,strides=2, activation=tf.nn.relu,
+                conv_1 = tf.layers.conv2d(conv_in, 64, 4, activation=tf.nn.relu,
                                           kernel_regularizer=tf.contrib.layers.l2_regularizer(self.regularization),
                                           kernel_initializer=tf.contrib.layers.xavier_initializer(),
                                           bias_initializer=tf.constant_initializer(0))
@@ -85,17 +85,17 @@ class QModel(object):
                                          self.regularization),
                                      kernel_initializer=tf.contrib.layers.xavier_initializer(),
                                      bias_initializer=tf.constant_initializer(0)))
-                conv_out = tf.layers.dense(conv_2, 256, activation=tf.nn.relu,
+                conv_out = tf.layers.dense(conv_2, 512, activation=tf.nn.relu,
                                            kernel_regularizer=tf.contrib.layers.l2_regularizer(self.regularization),
                                            kernel_initializer=tf.contrib.layers.xavier_initializer())
-                h_0 = tf.layers.dense(self.placeholders['info'], 64, activation=tf.nn.relu,
+                h_0 = tf.layers.dense(self.placeholders['info'], 16, activation=tf.nn.relu,
                                       kernel_regularizer=tf.contrib.layers.l2_regularizer(self.regularization),
                                       kernel_initializer=tf.contrib.layers.xavier_initializer())
                 h_1 = tf.layers.dense(tf.concat([conv_out, h_0], axis=1), 128, activation=tf.nn.relu,
                                       kernel_regularizer=tf.contrib.layers.l2_regularizer(self.regularization),
                                       kernel_initializer=tf.contrib.layers.xavier_initializer())
             else:
-                h_0 = tf.layers.dense(self.placeholders['info'], 64, activation=tf.nn.relu,
+                h_0 = tf.layers.dense(self.placeholders['info'], 32, activation=tf.nn.relu,
                                       kernel_regularizer=tf.contrib.layers.l2_regularizer(self.regularization),
                                       kernel_initializer=tf.contrib.layers.xavier_initializer())
                 h_0 = tf.layers.dense(h_0, 32, activation=tf.nn.relu,

@@ -31,18 +31,14 @@ def get_coord_from_mario(obs, step_x, step_y):
     return focusy, focusx
 
 class GameState(object):
-    def __init__(self, frames, prev_actions):
+    def __init__(self, frames):
         self.frames = frames
-        self.prev_actions = prev_actions
 
     def get_frames(self):
         return self.frames
 
     def get_last_frame(self):
         return self.frames[-1]
-
-    def get_prev_actions(self):
-        return self.prev_actions
 
 
 
