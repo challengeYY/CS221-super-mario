@@ -1,8 +1,0 @@
-model_checkpoint_path: "model.weights-60000"
-all_model_checkpoint_paths: "../20171126_173946/model.weights-48000"
-all_model_checkpoint_paths: "../20171126_175333/model.weights-50000"
-all_model_checkpoint_paths: "../20171126_180732/model.weights-52000"
-all_model_checkpoint_paths: "../20171126_182049/model.weights-54000"
-all_model_checkpoint_paths: "../20171126_183453/model.weights-56000"
-all_model_checkpoint_paths: "../20171126_184819/model.weights-58000"
-all_model_checkpoint_paths: "model.weights-60000"
