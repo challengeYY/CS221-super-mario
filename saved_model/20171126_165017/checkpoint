@@ -1,0 +1,4 @@
+model_checkpoint_path: "model.weights-40000"
+all_model_checkpoint_paths: "../20171126_162927/model.weights-36000"
+all_model_checkpoint_paths: "../20171126_163953/model.weights-38000"
+all_model_checkpoint_paths: "model.weights-40000"
