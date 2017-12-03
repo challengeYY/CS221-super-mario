@@ -1,8 +1,10 @@
 from enum import *
 import numpy as np
 
-def out_of_frame(x,y):
+
+def out_of_frame(x, y):
     return x < 0 or y < 0 or x >= Window.Width or y >= Window.Height
+
 
 # get tile at (mario.x + step_x, mario.y + step_y)
 # where positive step_x and step_y indicates right and up
@@ -11,6 +13,7 @@ def get_tile_from_mario(obs, step_x, step_y):
     focusy, focusx = get_coord_from_mario(obs, step_x, step_y)
     return obs[focusy, focusx]
 
+
 def get_mario_coord(obs):
     ys, xs = np.where(obs == Tile.MARIO)
     if len(xs) == 0:
@@ -18,6 +21,7 @@ def get_mario_coord(obs):
     mariox = xs[0]
     marioy = ys[0]
     return marioy, mariox
+
 
 def get_coord_from_mario(obs, step_x, step_y):
     coord = get_mario_coord(obs)
@@ -29,6 +33,7 @@ def get_coord_from_mario(obs, step_x, step_y):
     if out_of_frame(focusx, focusy):
         return None
     return focusy, focusx
+
 
 class GameState(object):
     def __init__(self, frames, prev_actions):
@@ -44,6 +49,13 @@ class GameState(object):
     def get_prev_actions(self):
         return self.prev_actions
 
+    def get_last_n_obs(self, n=1):
+
+        obs = [[np.zeros([Window.Width, Window.Height])]] * (n - len(self.frames))
+        for i in range(min([n, len(self.frames)])):
+            obs.append(self.frames[-1-i].get_obs())
+
+        return obs
 
 
 class GameFrame(object):
@@ -69,6 +81,7 @@ class GameFrame(object):
     def get_info(self):
         return self.info
 
+
 # get mario's velocity from state1 to state2
 def get_velocity(state1, state2):
     # 13 x 16 numpy array
@@ -77,12 +90,13 @@ def get_velocity(state1, state2):
     min_diff = float('inf')
     for v in range(3):
         shifted_obs1 = np.roll(obs1, v, axis=1)
-        shifted_obs1[:,:v] = obs2[:,:v]
+        shifted_obs1[:, :v] = obs2[:, :v]
         diff = np.sum(np.abs(shifted_obs1 - obs2))
         if diff < min_diff:
             min_diff = diff
             min_v = v
     return v
+
 
 def get_death_penalty_value(time, distance):
     return (time - Time.TOTAL_GAME_TIME) - distance / 3

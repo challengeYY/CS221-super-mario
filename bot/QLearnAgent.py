@@ -14,7 +14,7 @@ class QLearnAgent(Agent):
         self.maxGameIter = options.maxGameIter
         self.windowsize = options.windowsize
         self.framecache = []  # list of frames for each game, cleared at the end of the game
-        self.prevActionsSize = 3
+        self.prevActionsSize = 5
         self.prevActions = [[0] * len(Action.NAME)] * self.prevActionsSize
         self.gameIter = 0
         self.bestScore = 0
@@ -41,7 +41,7 @@ class QLearnAgent(Agent):
 
     def recordPrevAction(self, action):
         self.prevActions.pop(0)
-        self.prevActions.append(action)
+        self.prevActions.append(action[:])
 
     def cacheState(self):
         frames = self.framecache[-self.windowsize:]

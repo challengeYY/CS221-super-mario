@@ -57,16 +57,16 @@ class QLearningAlgorithm():
             rand = random.random()
             if rand < self.explorationProb:
                 actionIdx = random.choice(range(len(self.actions)))
-                print "randomly select action id: {}".format(actionIdx)
+                print "randomly select action: {}".format(self.actions[actionIdx])
             else:
                 if self.softmaxExplore:
                     prob = self.getProb(state)
                     actionIdx = random.choice(range(len(self.actions)), p=prob)
-                    print "Prob: {} selected action id: {}".format(prob, actionIdx)
+                    print "Prob: {} selected action: {}".format(prob, self.actions[actionIdx])
                 else:
                     q = self.getQ(self.model.prediction_vs, state)
                     actionIdx, _ = max(enumerate(q), key=operator.itemgetter(1))
-                    print "Q: {} best action id: {}".format(q, actionIdx)
+                    print "Q: {} best action: {}".format(q, self.actions[actionIdx])
         # probs = self.getProb(state)  # soft max prob
         #    actionIdx = random.choice(range(len(self.actions)),
         #                              p=probs)
@@ -74,7 +74,7 @@ class QLearningAlgorithm():
         #    print "Probs: {}".format(probs)
         else:
             actionIdx, q = max(enumerate(self.getQ(self.model.prediction_vs, state)), key=operator.itemgetter(1))
-            print "Q: {} best action id: {}".format(q, actionIdx)
+            print "Q: {} best action: {}".format(q, self.actions[actionIdx])
         return Action.act(self.actions[actionIdx]), actionIdx
 
     # Call this function to get the step size to update the weights.

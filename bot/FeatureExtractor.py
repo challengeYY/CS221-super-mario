@@ -18,13 +18,14 @@ class FeatureExtractor:
 
 
 class TileFeatureExtractor(FeatureExtractor):
+    def __init__(self, windowSize):
+        self.windowSize = windowSize
+
     def featureSize(self):
-        raise Exception("Cannot get featureSize for TileFeatureExtractor")
+        return Window.Width, Window.Height, self.windowSize
 
     def extract(self, feature, state):
-        tiles = []
-        obs = state.get_last_frame().get_obs()
-        tiles.append(obs)
+        tiles = state.get_last_n_obs(self.windowSize)
         return np.array(np.transpose(tiles, (2, 1, 0)))
 
 

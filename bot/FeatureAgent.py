@@ -17,14 +17,15 @@ class FeatureAgent(QLearnAgent):
         self.featureExtractors.append(BehindFeatureExtractor())
         self.featureExtractors.append(PrevActionsFeatureExtractor(self.prevActionsSize))
 
-        self.tileFeatureExtractor = TileFeatureExtractor()
+        self.tileFeatureExtractor = TileFeatureExtractor(options.windowsize)
 
         featureSize = sum([fe.featureSize() for fe in self.featureExtractors])
+        tile_row, tile_col, window_size = self.tileFeatureExtractor.featureSize()
         self.model = QModel(
             info_size=featureSize,
-            tile_row=Window.Width,
-            tile_col=Window.Height,
-            window_size=self.windowsize,
+            tile_row=tile_row,
+            tile_col=tile_col,
+            window_size=window_size,
             num_actions=len(self.actions),
             optimizer='adam',
             lr=1e-4,

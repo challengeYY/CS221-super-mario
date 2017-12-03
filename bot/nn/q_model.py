@@ -44,7 +44,8 @@ class QModel(object):
         self.tile_col = tile_col
         self.window_size = window_size
         self.placeholders = {}
-        self.placeholders['tile'] = tf.placeholder(tf.float32, shape=(None, self.tile_row, self.tile_col, 1))
+        self.placeholders['tile'] = tf.placeholder(tf.float32,
+                                                   shape=(None, self.tile_row, self.tile_col, self.window_size))
         self.placeholders['info'] = tf.placeholder(tf.float32, shape=(None, self.info_size))
         self.placeholders['target_q'] = tf.placeholder(tf.float32, shape=(None,))
         self.placeholders['action'] = tf.placeholder(tf.int32, shape=(None,))
@@ -74,18 +75,18 @@ class QModel(object):
         """
         with tf.variable_scope(variable_scope, initializer=tf.uniform_unit_scaling_initializer(1.0)):
             if self.conv:
-                conv_in = tf.squeeze(tf.one_hot(tf.cast(self.placeholders['tile'] - 1, tf.uint8), 4, axis=-1), axis=3)
-                conv_1 = tf.layers.conv2d(conv_in, 64, 5,strides=2, activation=tf.nn.relu,
+                conv_in = tf.reshape(tf.one_hot(tf.cast(self.placeholders['tile'], tf.uint8), 4, axis=-1),
+                                     shape=[-1, self.tile_row, self.tile_col, self.window_size * 4])
+                conv_1 = tf.layers.conv2d(conv_in, 64, 5, strides=2, activation=tf.nn.relu,
                                           kernel_regularizer=tf.contrib.layers.l2_regularizer(self.regularization),
                                           kernel_initializer=tf.contrib.layers.xavier_initializer(),
                                           bias_initializer=tf.constant_initializer(0))
-                conv_2 = tf.contrib.layers.flatten(
-                    tf.layers.conv2d(conv_1, 64, 3, activation=tf.nn.relu,
+                conv_2 = tf.layers.conv2d(conv_1, 64, 3, activation=tf.nn.relu,
                                      kernel_regularizer=tf.contrib.layers.l2_regularizer(
                                          self.regularization),
                                      kernel_initializer=tf.contrib.layers.xavier_initializer(),
-                                     bias_initializer=tf.constant_initializer(0)))
-                conv_out = tf.layers.dense(conv_2, 256, activation=tf.nn.relu,
+                                     bias_initializer=tf.constant_initializer(0))
+                conv_out = tf.layers.dense(tf.contrib.layers.flatten(conv_2), 256, activation=tf.nn.relu,
                                            kernel_regularizer=tf.contrib.layers.l2_regularizer(self.regularization),
                                            kernel_initializer=tf.contrib.layers.xavier_initializer())
                 h_0 = tf.layers.dense(self.placeholders['info'], 64, activation=tf.nn.relu,
@@ -104,6 +105,10 @@ class QModel(object):
                 h_1 = tf.layers.dense(h_0, 32, activation=tf.nn.relu,
                                       kernel_regularizer=tf.contrib.layers.l2_regularizer(self.regularization),
                                       kernel_initializer=tf.contrib.layers.xavier_initializer())
+
+            h_2 = tf.layers.dense(h_1, 64, activation=tf.nn.relu,
+                                  kernel_regularizer=tf.contrib.layers.l2_regularizer(self.regularization),
+                                  kernel_initializer=tf.contrib.layers.xavier_initializer())
             out = tf.layers.dense(h_1, self.numActions, activation=None,
                                   kernel_regularizer=tf.contrib.layers.l2_regularizer(self.regularization),
                                   kernel_initializer=tf.contrib.layers.xavier_initializer())
