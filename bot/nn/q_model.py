@@ -124,12 +124,12 @@ class QModel(object):
             depth = self.numActions
             action_masks = tf.cast(tf.one_hot(indices, depth), tf.bool)
             reg_loss = tf.losses.get_regularization_loss()
-            tf.summary.scalar('Regularization Loss', reg_loss)
+            tf.summary.scalar('Regularization_Loss', reg_loss)
             raw_loss = tf.losses.huber_loss(self.placeholders['target_q'],
                                             tf.boolean_mask(self.predicted_Q[self.prediction_vs], action_masks))
             self.loss = raw_loss + reg_loss
-            tf.summary.scalar('Q Loss', raw_loss)
-            tf.summary.scalar('Total Loss', self.loss)
+            tf.summary.scalar('Q_Loss', raw_loss)
+            tf.summary.scalar('Total_Loss', self.loss)
 
     def setup_train(self, lr, decay_step, decay_rate, optimizer_name):
         """
