@@ -132,6 +132,22 @@ class EnemyFeatureExtractor(FeatureExtractor):
                 else:
                     feature['behind_{}_enemy'.format(i)] = 0
 
+class Height5FeatureExtractor(FeatureExtractor):
+    def featureSize(self):
+        return 1
+
+    def extract(self, feature, state):
+        obs = state.get_last_frame().get_obs()
+        horizontal_tile = get_coord_from_mario(obs, 1, 0)
+        if horizontal_tile is None:
+            feature['height_5'] = 0
+        else:
+            hor_y, hor_x = horizontal_tile
+            for j in range(5):
+                if obs[hor_y-j, hor_x] == Tile.EMPTY_SPACE:
+                    feature['height_5'] = 0
+                    return
+            feature['height_5'] = 1
 
 class PitFeatureExtractor(FeatureExtractor):
     def featureSize(self):
