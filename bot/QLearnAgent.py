@@ -28,7 +28,7 @@ class QLearnAgent(Agent):
         self.isTrain = options.isTrain
         self.env = env
         self.actions = [
-            (['Right', 'A'], 10),
+            (['Right', 'A'], 9),
             (['Right', 'B'], 5), 
             (['Right', 'A'], 1), 
             (['Right', 'A', 'B'], 1),
