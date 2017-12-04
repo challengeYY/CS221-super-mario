@@ -29,7 +29,8 @@ class QLearningAlgorithm():
     def reset(self):
         self.actioncache.append([])
         self.statecache.append([])
-        self.explorationProb = self.explorationProb / 2
+        if self.options.isTrain and self.explorationProb >= 0.05:
+            self.explorationProb = self.explorationProb * 0.8
         if len(self.statecache) > self.maxCache:
             self.actioncache.pop(0)
             self.statecache.pop(0)
@@ -86,6 +87,7 @@ class QLearningAlgorithm():
                     q = self.getQ(self.model.prediction_vs, state)
                     actionIdx, _ = max(enumerate(q), key=operator.itemgetter(1))
                     print self.formatQ(q)
+                    print "Max action: {}".format(self.actions[actionIdx])
         # probs = self.getProb(state)  # soft max prob
         #    actionIdx = random.choice(range(len(self.actions)),
         #                              p=probs)
@@ -95,6 +97,7 @@ class QLearningAlgorithm():
             q = self.getQ(self.model.prediction_vs, state)
             actionIdx, _ = max(enumerate(q), key=operator.itemgetter(1))
             print self.formatQ(q)
+            print "Max action: {}".format(self.actions[actionIdx])
         return self.actions[actionIdx], actionIdx
 
     # Call this function to get the step size to update the weights.

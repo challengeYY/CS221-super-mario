@@ -28,8 +28,8 @@ class QLearnAgent(Agent):
         self.isTrain = options.isTrain
         self.env = env
         self.actions = [
-            (['Right', 'A'], 6),
-            (['Right', 'B'], 6), 
+            (['Right', 'A'], 10),
+            (['Right', 'B'], 5), 
             (['Right', 'A'], 1), 
             (['Right', 'A', 'B'], 1),
             (['Left', 'A'], 3), 
@@ -108,7 +108,6 @@ class QLearnAgent(Agent):
             self.algo.actioncache[-1].append(action_idx)
 
         self.recordPrevAction(self.action)
-        self.log(self.action, reward)
         return self.action
 
     def exit(self):
