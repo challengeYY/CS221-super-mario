@@ -103,15 +103,11 @@ def main():
     try:
         action = agent.initAction()
         while not agent.exit():
-            total_reward = 0
-            skip_frames = 1
-            for i in range(skip_frames):
-                obs, reward, is_finished, info = env.step(action)
-                total_reward += reward
+            obs, reward, is_finished, info = env.step(action)
             if options.render:
                 env.render()
 
-            action = agent.act(obs, total_reward - skip_frames, is_finished, info)
+            action = agent.act(obs, reward, is_finished, info)
     except Exception as e:
         agent.handle(e)
 

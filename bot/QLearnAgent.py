@@ -4,7 +4,7 @@ from time import sleep
 import numpy as np
 from enum import *
 from util import *
-import pickle as pk
+import pickle
 from QLearnAlgo import *
 
 
@@ -22,21 +22,12 @@ class QLearnAgent(Agent):
         self.frame = None
         self.action = Action.act('Right')
         self.framecache = []  # list of frames for each game, cleared at the end of the game
-        self.prevActions = [[0] * len(Action.NAME)] * self.prevActionsSize
+        self.prevActions = [(Action.empty(), 5)] * self.prevActionsSize
         self.gameIter = 0
         self.bestScore = 0
         self.isTrain = options.isTrain
         self.env = env
-        self.actions = [
-            (['Right', 'A'], 5),
-            (['Right', 'A'], 4),
-            (['Right', 'B'], 4), 
-            (['Right', 'A'], 1), 
-            (['Right', 'A', 'B'], 1),
-            (['Left', 'A'], 3), 
-            (['Left', 'B'], 3),
-            ([Action.NO_ACTION], 1), 
-        ]
+        self.init_actions()
         self.algo = QLearningAlgorithm(
             options=options,
             actions=self.actions,
@@ -47,6 +38,28 @@ class QLearnAgent(Agent):
         self.totalReward = 0
         self.actionCounter = 0
         self.score_log_file = options.model_dir + "/score_log"
+
+    def init_actions(self):
+        options = self.options
+        action_path = options.model_dir + '/action.pickle'
+        if self.options.isTrain:
+            self.actions = [
+                (['Right', 'A'], 5),
+                (['Right', 'A'], 3),
+                (['Right', 'B'], 3), 
+                (['Right', 'A'], 1), 
+                (['Right', 'A', 'B'], 1),
+                (['Left', 'A'], 3), 
+                (['Left', 'B'], 3),
+                ([Action.NO_ACTION], 1), 
+            ]
+            pickle.dump(self.actions, open(action_path, 'wb'))
+        else:
+            if not os.path.isfile(action_path):
+                print('No action stored in {}'.format(action_path))
+                exit(-1)
+            else:
+                self.actions = pickle.load(open(action_path, 'rb'))
 
     def featureExtractor(self, window, action):
         raise Exception('Abstract method! should be overridden')
@@ -68,13 +81,25 @@ class QLearnAgent(Agent):
         return state
 
     def act(self, obs, reward, is_finished, info):
+
+        # Customized reward
+        # if stuck at the same location for 5 frames, reward = -1 
+        stuck_frames = 5
+        if len(self.framecache)>=stuck_frames:
+            dists = [frame.get_info()['distance'] for frame in self.framecache[-stuck_frames:]]
+            if len(set(dists)) == 1: # dists are the same
+                reward = -0.5
+        # if dead reward = -10
+        if is_finished and info['distance'] < 3250:
+            reward = -10 # dead reward
+
         self.frame = GameFrame(np.copy(obs), reward, is_finished, info.copy())
         self.totalReward += reward
 
         # caching new frame
         self.framecache.append(self.frame)
 
-        if len(self.framecache) > self.windowsize:
+        if len(self.framecache) > self.windowsize + 10: # slightly larger for look at stuck_frames
             self.framecache.pop(0)  # remove frame outside window to save memory
 
         # only update state and action once a while
@@ -108,7 +133,7 @@ class QLearnAgent(Agent):
             self.action = Action.act(actionOption)
             self.algo.actioncache[-1].append(action_idx)
 
-        self.recordPrevAction(self.action)
+        self.recordPrevAction((self.action, self.actionCounter))
         return self.action
 
     def exit(self):

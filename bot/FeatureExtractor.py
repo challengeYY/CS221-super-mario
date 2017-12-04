@@ -158,8 +158,23 @@ class PrevActionsFeatureExtractor(FeatureExtractor):
         return len(Action.NAME) * self.prevActionsSize
 
     def extract(self, feature, state):
-        # extract x, y coordinate of Mario
-        prevActions = chain.from_iterable(state.get_prev_actions())
+        prevActions = [action for action, count in state.get_prev_actions()]
+        prevActions = chain.from_iterable(prevActions)
 
         for i, actionBit in enumerate(prevActions):
             feature['prevActionBit-{}'.format(i)] = actionBit
+
+class PrevActionAFeatureExtractor(FeatureExtractor):
+    def __init__(self, options):
+        self.options = options
+
+    def featureSize(self):
+        return 1 
+
+    def extract(self, feature, state):
+        action, count = state.get_prev_actions()[-1]
+        if count < self.options.stepCounterMax:
+            prevA = 0
+        else:
+            prevA = action[Action.index('A')]
+        feature['prevActionA'] = prevA
