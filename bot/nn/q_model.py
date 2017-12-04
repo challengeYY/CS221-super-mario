@@ -27,13 +27,7 @@ def get_optimizer(opt):
 
 
 class QModel(object):
-<<<<<<< HEAD
     def __init__(self, options, info_size, num_actions, tile_row, tile_col, window_size, conv=True):
-=======
-    def __init__(self, info_size, num_actions, tile_row, tile_col, window_size, optimizer='adam', lr=0.01,
-                 decay_step=1000, decay_rate=1, regularization=0, conv=True, save_period=2000, gradient_clip=10,
-                 model_dir='./model/'):
->>>>>>> ca13db72515ae9c8475c6a66091957db7c897c1e
         """
         Initializes your System
         :param stateVectorLength: Length of vector used to represent state and action.
@@ -41,14 +35,8 @@ class QModel(object):
         self.options = options
         self.regularization = options.regularization
         self.conv = conv
-<<<<<<< HEAD
         self.save_period = options.save_period
         self.gradient_clip = options.gradient_clip
-=======
-        self.save_period = save_period
-        self.gradient_clip = gradient_clip
-        self.model_dir = model_dir
->>>>>>> ca13db72515ae9c8475c6a66091957db7c897c1e
 
         # ==== set up placeholder tokens ========
         self.info_size = info_size
@@ -82,11 +70,7 @@ class QModel(object):
         self.sess = tf.Session()
         self.setup_tensorboard()
 
-<<<<<<< HEAD
         self.initialize_model()
-=======
-        self.load_parameters()
->>>>>>> ca13db72515ae9c8475c6a66091957db7c897c1e
 
     def create_model(self, variable_scope):
         """
@@ -136,11 +120,7 @@ class QModel(object):
 
     def setup_tensorboard(self):
         self.merged_summary = tf.summary.merge_all()
-<<<<<<< HEAD
         self.train_writer = tf.summary.FileWriter(self.options.model_dir+"/logs/",
-=======
-        self.train_writer = tf.summary.FileWriter(self.model_dir+"logs/",
->>>>>>> ca13db72515ae9c8475c6a66091957db7c897c1e
                                                   self.sess.graph)
 
     def setup_loss(self):
@@ -232,11 +212,7 @@ class QModel(object):
         losses.append(loss)
         self.train_writer.add_summary(summary, global_step)
         if not global_step % self.save_period:
-<<<<<<< HEAD
             self.save_model()
-=======
-            self.save_model(self.model_dir)
->>>>>>> ca13db72515ae9c8475c6a66091957db7c897c1e
         return sum(losses) / len(losses)
 
     def update_target_network(self):
@@ -248,7 +224,6 @@ class QModel(object):
         :return:
         """
         # save model weights
-<<<<<<< HEAD
         model_dir = self.options.model_dir
         if not os.path.exists(model_dir):
             os.makedirs(model_dir)
@@ -272,21 +247,6 @@ class QModel(object):
             else:
                 print("No check points stored in {}".format(ckpt_dir))
                 exit(-1)
-=======
-        model_path = output_path + "{:%Y%m%d_%H%M%S}".format(
-            datetime.now()) + "/"
-        if not os.path.exists(model_path):
-            os.makedirs(model_path)
-        logging.info("Saving model parameters...")
-        self.saver.save(self.sess, model_path + "model.weights", global_step=self.global_step)
-
-    def load_parameters(self):
-        ckpt = tf.train.get_checkpoint_state(self.model_dir)
-        v2_path = ckpt.model_checkpoint_path + ".index" if ckpt else ""
-        if ckpt and (tf.gfile.Exists(ckpt.model_checkpoint_path) or tf.gfile.Exists(v2_path)):
-            logging.info("Reading model parameters from %s" % ckpt.model_checkpoint_path)
-            self.saver.restore(self.sess, ckpt.model_checkpoint_path)
->>>>>>> ca13db72515ae9c8475c6a66091957db7c897c1e
         else:
             logging.info("Created model with fresh parameters in {}".format(model_dir))
             self.sess.run(tf.global_variables_initializer())
