@@ -70,6 +70,8 @@ class QModel(object):
         self.sess = tf.Session()
         self.setup_tensorboard()
 
+        self.initialize_model()
+
     def create_model(self, variable_scope):
         """
         Construct the tf graph.
@@ -83,10 +85,10 @@ class QModel(object):
                                           kernel_initializer=tf.contrib.layers.xavier_initializer(),
                                           bias_initializer=tf.constant_initializer(0))
                 conv_2 = tf.layers.conv2d(conv_1, 64, 3, activation=tf.nn.relu,
-                                     kernel_regularizer=tf.contrib.layers.l2_regularizer(
-                                         self.regularization),
-                                     kernel_initializer=tf.contrib.layers.xavier_initializer(),
-                                     bias_initializer=tf.constant_initializer(0))
+                                          kernel_regularizer=tf.contrib.layers.l2_regularizer(
+                                              self.regularization),
+                                          kernel_initializer=tf.contrib.layers.xavier_initializer(),
+                                          bias_initializer=tf.constant_initializer(0))
                 conv_out = tf.layers.dense(tf.contrib.layers.flatten(conv_2), 256, activation=tf.nn.relu,
                                            kernel_regularizer=tf.contrib.layers.l2_regularizer(self.regularization),
                                            kernel_initializer=tf.contrib.layers.xavier_initializer())
@@ -118,7 +120,7 @@ class QModel(object):
 
     def setup_tensorboard(self):
         self.merged_summary = tf.summary.merge_all()
-        self.train_writer = tf.summary.FileWriter('./train',
+        self.train_writer = tf.summary.FileWriter(self.options.model_dir+"/logs/",
                                                   self.sess.graph)
 
     def setup_loss(self):
@@ -205,7 +207,7 @@ class QModel(object):
 
         losses = []
         _, loss, summary, global_step = self.sess.run(
-            [self.train_op, self.loss, self.merged_summary, self.global_step],
+            [self.train_op, self.loss, self. merged_summary, self.global_step],
             feed_dict=feed_dict)
         losses.append(loss)
         self.train_writer.add_summary(summary, global_step)
@@ -222,28 +224,30 @@ class QModel(object):
         :return:
         """
         # save model weights
-        output_path = DEFAULT_MODEL_PATH
-        model_path = output_path + "/{:%Y%m%d_%H%M%S}".format(
-            datetime.now()) + "/"
-        if not os.path.exists(model_path):
-            os.makedirs(model_path)
-        logging.info("Saving model parameters...")
-        self.saver.save(self.sess, model_path + "model.weights", global_step=self.global_step)
-        logging.info("Saving options...")
-        pickle.dump(self.options, open(model_path + "options.pickle", 'wb'))
-        logging.info("Finish saving models")
+        model_dir = self.options.model_dir
+        if not os.path.exists(model_dir):
+            os.makedirs(model_dir)
+        ckpt_dir = model_dir + '/ckpt' + str(self.options.ckpt)
+        if not os.path.exists(ckpt_dir):
+            os.makedirs(ckpt_dir)
+        logging.info("Saving model parameters in {} ...".format(model_dir))
+        self.saver.save(self.sess, ckpt_dir + "/model.weights", global_step=self.global_step)
+        logging.info("Saving options in {} ...".format(ckpt_dir))
+        pickle.dump(self.options, open(model_dir + "/options.pickle", 'wb'))
 
     def initialize_model(self):
         model_dir = self.options.model_dir
-        if model_dir is not None:
-            ckpt = tf.train.get_checkpoint_state(model_dir)
+        ckpt_dir = model_dir + '/ckpt' + str(self.options.ckpt)
+        if not self.options.isTrain:
+            ckpt = tf.train.get_checkpoint_state(ckpt_dir)
             v2_path = ckpt.model_checkpoint_path + ".index" if ckpt else ""
             if ckpt and (tf.gfile.Exists(ckpt.model_checkpoint_path) or tf.gfile.Exists(v2_path)):
                 logging.info("Reading model parameters from %s" % ckpt.model_checkpoint_path)
                 self.saver.restore(self.sess, ckpt.model_checkpoint_path)
             else:
-                logging.info("No check points stored in {}".format(model_dir))
+                print("No check points stored in {}".format(ckpt_dir))
+                exit(-1)
         else:
-            logging.info("Created model with fresh parameters.")
+            logging.info("Created model with fresh parameters in {}".format(model_dir))
             self.sess.run(tf.global_variables_initializer())
             logging.info('Num params: %d' % sum(v.get_shape().num_elements() for v in tf.trainable_variables()))

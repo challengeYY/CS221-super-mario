@@ -4,6 +4,7 @@ from time import sleep
 import numpy as np
 from enum import *
 from util import *
+import pickle as pk
 from QLearnAlgo import *
 
 
@@ -36,6 +37,7 @@ class QLearnAgent(Agent):
         )
         self.stepCounter = 0
         self.totalReward = 0
+        self.score_log_file = options.model_dir + "/score_log"
 
     def featureExtractor(self, window, action):
         raise Exception('Abstract method! should be overridden')
@@ -106,6 +108,8 @@ class QLearnAgent(Agent):
                 if self.bestScore < distance:
                     self.bestScore = distance
                     print "Best Score: {}".format(self.bestScore)
+                with open(self.score_log_file,'a+') as score_log :
+                    score_log.write("{}\n".format(distance))
                 print "Score: {}".format(distance)
             self.gameIter += 1
             self.env.reset()

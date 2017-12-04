@@ -9,13 +9,15 @@ def main():
     parser = argparse.ArgumentParser()
 
     # Game options 
-    parser.add_argument('--model_dir', dest='model_dir', action='store', help='Directory to store weights')
+    parser.add_argument('--model_dir', dest='model_dir', action='store', default='./model',
+            help='Directory to store weights')
     parser.add_argument('--player', dest='player', action='store', default='human',
                         help='Specify the player, valid option: human, baseline, feature')
     parser.add_argument('--no-gui', dest='render', action='store_false', default=True,
                         help='Do not render visualization of the game')
     parser.add_argument('--train', dest='isTrain', action='store_true', default=False,
                         help='Training mode')
+    parser.add_argument('--ckpt', dest='ckpt', nargs='?', default=0, type=int, help='ckpt number of a training')
 
     # Game hyper parameter
     parser.add_argument('--maxGameIter', dest='maxGameIter', nargs='?', default=1, type=int,
@@ -59,9 +61,14 @@ def main():
 
     env = gym.make('ppaquette/SuperMarioBros-1-1-Tiles-v0')
 
-    # load options
-    if not options.isTrain and options.model_dir is not None:
-        options = pickle.load(open(options.model_dir + 'options.pickle', 'rb'))
+    if options.isTrain:
+        options.model_dir = "model/{:%Y%m%d_%H%M%S}".format(datetime.now())
+    else: # testing. loading options
+        option_path = options.model_dir + '/options.pickle'
+        if not os.path.isfile(option_path):
+            print('No parameters stored in {}'.format(option_path))
+            exit(-1)
+        options = pickle.load(open(option_path, 'rb'))
         options.isTrain = False
         print('Loading options ...')
         optionDict = vars(options)
@@ -82,6 +89,9 @@ def main():
         agent = FeatureAgent(options, env)
     elif options.player == 'manual':
         agent = ManualFeatureAgent(options, env)
+
+    if not os.path.exists(options.model_dir):
+        os.makedirs(options.model_dir)
 
     if not options.isTrain:
         options.maxGameIter = 1

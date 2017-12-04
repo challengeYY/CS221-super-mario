@@ -29,7 +29,6 @@ class FeatureAgent(QLearnAgent):
             window_size=window_size,
             num_actions=len(self.actions)
         )
-        self.model.initialize_model()
         self.algo.set_model(self.model)
 
     # obs: 13 x 16 numpy array (y, x). (0, 0) is the top left corner

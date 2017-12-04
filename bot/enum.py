@@ -1,6 +1,4 @@
 
-DEFAULT_MODEL_PATH='./model/'
-
 class Tile:
     NAME = ['EmptySpace', 'Object', 'Enemy', 'Mario']
     EMPTY_SPACE = 0
