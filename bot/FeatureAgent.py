@@ -47,4 +47,4 @@ class FeatureAgent(QLearnAgent):
         for fe in self.featureExtractors:
             fe.extract(feature, window)
         tiles = self.tileFeatureExtractor.extract(OrderedDict(), window)
-        return tiles, feature.values()
+        return tiles, feature
