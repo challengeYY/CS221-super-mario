@@ -10,6 +10,11 @@ class FeatureAgent(QLearnAgent):
         super(FeatureAgent, self).__init__(options, env)
         self.featureExtractors = []
         self.featureExtractors.append(InfoFeatureExtractor())
+        self.featureExtractors.append(VelocityFeatureExtractor())
+        self.featureExtractors.append(MarioFeatureExtractor())
+        self.featureExtractors.append(FrontFeatureExtractor())
+        self.featureExtractors.append(PitFeatureExtractor())
+        self.featureExtractors.append(BehindFeatureExtractor())
         self.featureExtractors.append(PrevActionsFeatureExtractor(self.prevActionsSize))
 
         self.tileFeatureExtractor = TileFeatureExtractor(options)
@@ -43,16 +48,3 @@ class FeatureAgent(QLearnAgent):
             fe.extract(feature, window)
         tiles = self.tileFeatureExtractor.extract(OrderedDict(), window)
         return tiles, feature.values()
-
-        # feature = []
-        # tiles = []
-        # last_state = window[-1]
-        # info = get_info(last_state)
-        # feature.append(info['distance'])
-        # feature.append(info['coins'])
-        # feature.append(info['player_status'])
-        # feature.append(info['time'])
-        # for state in window:
-        # obs = get_obs(state)
-        # tiles.append(obs)
-        # return np.array(np.transpose(tiles, (2, 1, 0))), np.array(feature)
