@@ -118,7 +118,7 @@ class PitFeatureExtractor(FeatureExtractor):
         if coord is not None:
             marioy, mariox = coord
             for i in range(1, 4):
-                if not out_of_frame(mariox + i, marioy + 1) and obs[marioy + 1, mariox + i] == Tile.EMPTY_SPACE:
+                if not out_of_frame(mariox + i, 12) and obs[12, mariox + i] == Tile.EMPTY_SPACE:
                     feature['pit_ahead'] = 1
                     break
 
