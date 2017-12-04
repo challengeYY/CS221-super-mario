@@ -43,6 +43,9 @@ def main():
     elif options.player == 'manual':
         agent = ManualFeatureAgent(options, env)
 
+    if not os.path.exists(options.model_dir):
+        os.makedirs(options.model_dir)
+
     if not options.isTrain:
         options.maxGameIter = 1
 

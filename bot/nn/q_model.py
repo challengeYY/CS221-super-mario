@@ -26,7 +26,8 @@ def get_optimizer(opt):
 
 class QModel(object):
     def __init__(self, info_size, num_actions, tile_row, tile_col, window_size, optimizer='adam', lr=0.01,
-                 decay_step=1000, decay_rate=1, regularization=0, conv=True, save_period=2000, gradient_clip=10):
+                 decay_step=1000, decay_rate=1, regularization=0, conv=True, save_period=2000, gradient_clip=10,
+                 model_dir='./model/'):
         """
         Initializes your System
         :param stateVectorLength: Length of vector used to represent state and action.
@@ -36,6 +37,7 @@ class QModel(object):
         self.conv = conv
         self.save_period = save_period
         self.gradient_clip = gradient_clip
+        self.model_dir = model_dir
 
         # ==== set up placeholder tokens ========
         self.info_size = info_size
@@ -69,6 +71,8 @@ class QModel(object):
         self.sess = tf.Session()
         self.setup_tensorboard()
 
+        self.load_parameters()
+
     def create_model(self, variable_scope):
         """
         Construct the tf graph.
@@ -82,10 +86,10 @@ class QModel(object):
                                           kernel_initializer=tf.contrib.layers.xavier_initializer(),
                                           bias_initializer=tf.constant_initializer(0))
                 conv_2 = tf.layers.conv2d(conv_1, 64, 3, activation=tf.nn.relu,
-                                     kernel_regularizer=tf.contrib.layers.l2_regularizer(
-                                         self.regularization),
-                                     kernel_initializer=tf.contrib.layers.xavier_initializer(),
-                                     bias_initializer=tf.constant_initializer(0))
+                                          kernel_regularizer=tf.contrib.layers.l2_regularizer(
+                                              self.regularization),
+                                          kernel_initializer=tf.contrib.layers.xavier_initializer(),
+                                          bias_initializer=tf.constant_initializer(0))
                 conv_out = tf.layers.dense(tf.contrib.layers.flatten(conv_2), 256, activation=tf.nn.relu,
                                            kernel_regularizer=tf.contrib.layers.l2_regularizer(self.regularization),
                                            kernel_initializer=tf.contrib.layers.xavier_initializer())
@@ -117,7 +121,7 @@ class QModel(object):
 
     def setup_tensorboard(self):
         self.merged_summary = tf.summary.merge_all()
-        self.train_writer = tf.summary.FileWriter('./train',
+        self.train_writer = tf.summary.FileWriter(self.model_dir+"logs/",
                                                   self.sess.graph)
 
     def setup_loss(self):
@@ -209,7 +213,7 @@ class QModel(object):
         losses.append(loss)
         self.train_writer.add_summary(summary, global_step)
         if not global_step % self.save_period:
-            self.save_model('./model')
+            self.save_model(self.model_dir)
         return sum(losses) / len(losses)
 
     def update_target_network(self):
@@ -221,15 +225,15 @@ class QModel(object):
         :return:
         """
         # save model weights
-        model_path = output_path + "/{:%Y%m%d_%H%M%S}".format(
+        model_path = output_path + "{:%Y%m%d_%H%M%S}".format(
             datetime.now()) + "/"
         if not os.path.exists(model_path):
             os.makedirs(model_path)
         logging.info("Saving model parameters...")
         self.saver.save(self.sess, model_path + "model.weights", global_step=self.global_step)
 
-    def initialize_model(self, model_dir):
-        ckpt = tf.train.get_checkpoint_state(model_dir)
+    def load_parameters(self):
+        ckpt = tf.train.get_checkpoint_state(self.model_dir)
         v2_path = ckpt.model_checkpoint_path + ".index" if ckpt else ""
         if ckpt and (tf.gfile.Exists(ckpt.model_checkpoint_path) or tf.gfile.Exists(v2_path)):
             logging.info("Reading model parameters from %s" % ckpt.model_checkpoint_path)

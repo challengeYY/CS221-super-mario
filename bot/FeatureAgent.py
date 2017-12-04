@@ -31,9 +31,9 @@ class FeatureAgent(QLearnAgent):
             lr=1e-4,
             decay_step=1000,
             decay_rate=1,
-            regularization=0.005
+            regularization=0.005,
+            model_dir=options.model_dir
         )
-        self.model.initialize_model(options.model_dir)
         self.algo.set_model(self.model)
 
     # obs: 13 x 16 numpy array (y, x). (0, 0) is the top left corner
