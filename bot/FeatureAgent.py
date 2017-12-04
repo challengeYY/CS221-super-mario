@@ -17,23 +17,19 @@ class FeatureAgent(QLearnAgent):
         self.featureExtractors.append(BehindFeatureExtractor())
         self.featureExtractors.append(PrevActionsFeatureExtractor(self.prevActionsSize))
 
-        self.tileFeatureExtractor = TileFeatureExtractor(options.windowsize)
+        self.tileFeatureExtractor = TileFeatureExtractor(options)
 
         featureSize = sum([fe.featureSize() for fe in self.featureExtractors])
         tile_row, tile_col, window_size = self.tileFeatureExtractor.featureSize()
         self.model = QModel(
+            options=options,
             info_size=featureSize,
             tile_row=tile_row,
             tile_col=tile_col,
             window_size=window_size,
-            num_actions=len(self.actions),
-            optimizer='adam',
-            lr=1e-4,
-            decay_step=1000,
-            decay_rate=1,
-            regularization=0.005
+            num_actions=len(self.actions)
         )
-        self.model.initialize_model(options.model_dir)
+        self.model.initialize_model()
         self.algo.set_model(self.model)
 
     # obs: 13 x 16 numpy array (y, x). (0, 0) is the top left corner

@@ -4,7 +4,9 @@ from __future__ import print_function
 
 import logging
 import os
+import pickle
 from datetime import datetime
+from ..enum import *
 
 import tensorflow as tf
 from tensorflow.python.ops import variable_scope as vs
@@ -25,17 +27,16 @@ def get_optimizer(opt):
 
 
 class QModel(object):
-    def __init__(self, info_size, num_actions, tile_row, tile_col, window_size, optimizer='adam', lr=0.01,
-                 decay_step=1000, decay_rate=1, regularization=0, conv=True, save_period=2000, gradient_clip=10):
+    def __init__(self, options, info_size, num_actions, tile_row, tile_col, window_size, conv=True):
         """
         Initializes your System
         :param stateVectorLength: Length of vector used to represent state and action.
-        :param optimizer: Name of optimizer.
         """
-        self.regularization = regularization
+        self.options = options
+        self.regularization = options.regularization
         self.conv = conv
-        self.save_period = save_period
-        self.gradient_clip = gradient_clip
+        self.save_period = options.save_period
+        self.gradient_clip = options.gradient_clip
 
         # ==== set up placeholder tokens ========
         self.info_size = info_size
@@ -60,7 +61,7 @@ class QModel(object):
         self.predicted_Q[self.target_vs], _, self.scope_vars[self.target_vs] = self.create_model(self.target_vs)
         self.setup_target_update(self.prediction_vs, self.target_vs)
         self.setup_loss()
-        self.setup_train(lr, decay_step, decay_rate, optimizer)
+        self.setup_train(options.lr, options.decay_step, options.decay_rate, options.optimizer)
 
         # ==== set up training/updating procedure ====
         # implement learning rate annealing
@@ -209,31 +210,39 @@ class QModel(object):
         losses.append(loss)
         self.train_writer.add_summary(summary, global_step)
         if not global_step % self.save_period:
-            self.save_model('./model')
+            self.save_model()
         return sum(losses) / len(losses)
 
     def update_target_network(self):
         self.sess.run([self.update_target_network_ops])
 
-    def save_model(self, output_path):
+    def save_model(self):
         """
         Save the current graph and weights to the output_path.
         :return:
         """
         # save model weights
+        output_path = DEFAULT_MODEL_PATH
         model_path = output_path + "/{:%Y%m%d_%H%M%S}".format(
             datetime.now()) + "/"
         if not os.path.exists(model_path):
             os.makedirs(model_path)
         logging.info("Saving model parameters...")
         self.saver.save(self.sess, model_path + "model.weights", global_step=self.global_step)
+        logging.info("Saving options...")
+        pickle.dump(self.options, open(model_path + "options.pickle", 'wb'))
+        logging.info("Finish saving models")
 
-    def initialize_model(self, model_dir):
-        ckpt = tf.train.get_checkpoint_state(model_dir)
-        v2_path = ckpt.model_checkpoint_path + ".index" if ckpt else ""
-        if ckpt and (tf.gfile.Exists(ckpt.model_checkpoint_path) or tf.gfile.Exists(v2_path)):
-            logging.info("Reading model parameters from %s" % ckpt.model_checkpoint_path)
-            self.saver.restore(self.sess, ckpt.model_checkpoint_path)
+    def initialize_model(self):
+        model_dir = self.options.model_dir
+        if model_dir is not None:
+            ckpt = tf.train.get_checkpoint_state(model_dir)
+            v2_path = ckpt.model_checkpoint_path + ".index" if ckpt else ""
+            if ckpt and (tf.gfile.Exists(ckpt.model_checkpoint_path) or tf.gfile.Exists(v2_path)):
+                logging.info("Reading model parameters from %s" % ckpt.model_checkpoint_path)
+                self.saver.restore(self.sess, ckpt.model_checkpoint_path)
+            else:
+                logging.info("No check points stored in {}".format(model_dir))
         else:
             logging.info("Created model with fresh parameters.")
             self.sess.run(tf.global_variables_initializer())

@@ -5,22 +5,33 @@ from util import *
 
 class QLearningAlgorithm():
     def __init__(self, options, actions, discount, featureExtractor):
+        # hyper parameter
+        self.updateInterval = options.updateInterval 
+        self.updateTargetInterval = options.updateTargetInterval
+        self.batchSize = options.batchSize 
+        self.batchPerFeedback = options.batchPerFeedback
+        self.maxCache = options.maxCache
+
+        # inits
         self.actions = actions
-        self.discount = discount
+        self.options = options
         self.featureExtractor = featureExtractor
-        self.updateInterval = 10  # number of frames to retrain the model
-        self.updateTargetInterval = 20  # number of frames to retrain the model
+        self.discount = discount
         self.updateCounter = 0
         self.updateTargetCounter = 0
-        self.batchSize = 20
-        self.batchPerFeedback = 5
         self.statecache = [[]]  # list of states for each game. A state is a window of frames
         self.actioncache = [[]]  # list of actions for each game
-        self.actioncacheSize = [0]  # list of actions for each game
-        self.options = options
         self.model = None
         self.explorationProb = 0.05
         self.softmaxExplore = options.softmaxExploration
+
+    # reset after each game iteration
+    def reset(self):
+        self.actioncache.append([])
+        self.statecache.append([])
+        if len(self.statecache) > self.maxCache:
+            self.actioncache.pop(0)
+            self.statecache.pop(0)
 
     def set_model(self, model):
         self.model = model
@@ -48,6 +59,12 @@ class QLearningAlgorithm():
             scores = self.model.inference_Prob([info])[0]
         return scores
 
+    def formatQ(self, Q):
+        info = 'Q: '
+        for i, q in enumerate(Q):
+            info += '{}={:.2f}, '.format('_'.join(self.actions[i]), q) 
+        return info
+
     # This algorithm will produce an action given a state.
     # Here we use the epsilon-greedy algorithm: with probability
     # |explorationProb|, take a random action.
@@ -66,15 +83,16 @@ class QLearningAlgorithm():
                 else:
                     q = self.getQ(self.model.prediction_vs, state)
                     actionIdx, _ = max(enumerate(q), key=operator.itemgetter(1))
-                    print "Q: {} best action: {}".format(q, self.actions[actionIdx])
+                    print self.formatQ(q)
         # probs = self.getProb(state)  # soft max prob
         #    actionIdx = random.choice(range(len(self.actions)),
         #                              p=probs)
         #    print "randomly select action id: {}".format(actionIdx)
         #    print "Probs: {}".format(probs)
         else:
-            actionIdx, q = max(enumerate(self.getQ(self.model.prediction_vs, state)), key=operator.itemgetter(1))
-            print "Q: {} best action: {}".format(q, self.actions[actionIdx])
+            q = self.getQ(self.model.prediction_vs, state)
+            actionIdx, _ = max(enumerate(q), key=operator.itemgetter(1))
+            print self.formatQ(q)
         return Action.act(self.actions[actionIdx]), actionIdx
 
     # Call this function to get the step size to update the weights.
@@ -82,8 +100,8 @@ class QLearningAlgorithm():
     def sample(self, sampleSize):
         # randomly choose a game and get its states
         samples = []
-        gameLenSum = float(sum(self.actioncacheSize))
-        gameProb = [length / gameLenSum for length in self.actioncacheSize]
+        gameLenSum = sum([len(a) for a in self.actioncache])
+        gameProb = [len(a) * 1.0 / gameLenSum for a in self.actioncache]
         for i in range(sampleSize):
             gameIdx = random.choice(range(0, len(self.statecache)), p=gameProb)
             # Should have cache of s0, a0, ....., sn, an, sn+1, where reward of an is stored in sn+1

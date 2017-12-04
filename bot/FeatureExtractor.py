@@ -18,8 +18,8 @@ class FeatureExtractor:
 
 
 class TileFeatureExtractor(FeatureExtractor):
-    def __init__(self, windowSize):
-        self.windowSize = windowSize
+    def __init__(self, options):
+        self.windowSize = options.tileWindowSize
 
     def featureSize(self):
         return Window.Width, Window.Height, self.windowSize

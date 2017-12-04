@@ -9,19 +9,24 @@ from QLearnAlgo import *
 
 class QLearnAgent(Agent):
     def __init__(self, options, env):
-        self.action = Action.act('Right')
-        self.frame = None
+
+        # hyper parameter
         self.maxGameIter = options.maxGameIter
         self.windowsize = options.windowsize
+        self.prevActionsSize = options.prevActionsSize
+        self.stepCounterMax = options.stepCounterMax
+
+        # inits
+        self.options = options
+        self.frame = None
+        self.action = Action.act('Right')
         self.framecache = []  # list of frames for each game, cleared at the end of the game
-        self.prevActionsSize = 5
         self.prevActions = [[0] * len(Action.NAME)] * self.prevActionsSize
         self.gameIter = 0
         self.bestScore = 0
-        self.maxCache = options.maxCache
         self.isTrain = options.isTrain
         self.env = env
-        self.actions = [Action.NO_ACTION, 'Right', 'Left', 'A', ['Right', 'A'], ['Right', 'B'], ['Right', 'A', 'B'],
+        self.actions = [[Action.NO_ACTION], ['Right'], ['Left'], ['A'], ['Right', 'A'], ['Right', 'B'], ['Right', 'A', 'B'],
                         ['Left', 'A'], ['Left', 'B'], ['Left', 'A', 'B']]
         self.algo = QLearningAlgorithm(
             options=options,
@@ -30,7 +35,6 @@ class QLearnAgent(Agent):
             featureExtractor=self.featureExtractor
         )
         self.stepCounter = 0
-        self.stepCounterMax = 4
         self.totalReward = 0
 
     def featureExtractor(self, window, action):
@@ -87,7 +91,6 @@ class QLearnAgent(Agent):
             # get and cache new action 
             self.action, action_idx = self.algo.getAction(state)
             self.algo.actioncache[-1].append(action_idx)
-            self.algo.actioncacheSize[-1] += 1
 
         self.recordPrevAction(self.action)
         self.log(self.action, reward)
@@ -107,15 +110,8 @@ class QLearnAgent(Agent):
             self.gameIter += 1
             self.env.reset()
             self.framecache = []
-            self.algo.actioncache.append([])
-            self.algo.actioncacheSize.append(0)
-            self.algo.statecache.append([])
             self.totalReward = 0
-
-            if len(self.algo.statecache) > self.maxCache:
-                self.algo.actioncache.pop(0)
-                self.algo.actioncacheSize.pop(0)
-                self.algo.statecache.pop(0)
+            self.algo.reset()
 
         info = self.frame.get_info()
         stuck = False
@@ -123,6 +119,9 @@ class QLearnAgent(Agent):
             stuck = info['ignore']
 
         reachMaxIter = self.gameIter >= self.maxGameIter
+
+        if reachMaxIter and self.options.isTrain:
+            self.algo.model.save_model()
 
         exit = reachMaxIter
         exit = exit and (self.frame.get_is_finished() or stuck)
