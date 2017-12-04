@@ -26,7 +26,7 @@ def main():
                         help='Number of frames to advance state')
     parser.add_argument('--updateInterval', dest='updateInterval', nargs='?', default=10, type=int,
                         help='Number of frames to retrain the model')
-    parser.add_argument('--updateTargetInterval', dest='updateTargetInterval', nargs='?', default=50, type=int,
+    parser.add_argument('--updateTargetInterval', dest='updateTargetInterval', nargs='?', default=20, type=int,
                         help='Number of updates to update the target network')
     parser.add_argument('--maxCache', dest='maxCache', nargs='?', default=1000, type=int,
                         help='Max number of training iteration')
@@ -40,7 +40,7 @@ def main():
                         help='Number of previous action to include in states')
     parser.add_argument('--batchSize', dest='batchSize', nargs='?', default=20, type=int,
                         help='Number of samples to train the model')
-    parser.add_argument('--batchPerFeedback', dest='batchPerFeedback', nargs='?', default=4, type=int,
+    parser.add_argument('--batchPerFeedback', dest='batchPerFeedback', nargs='?', default=10, type=int,
                         help='Number of batched updates before continue playing')
     parser.add_argument('--explorationProb', dest='explorationProb', nargs='?', default=0.5,
             type=float, help='Exploration Probability. Decay over time')
@@ -50,7 +50,7 @@ def main():
     parser.add_argument('--lr', dest='lr', nargs='?', default=1e-4, type=float, help='learning rate')
     parser.add_argument('--decay_step', dest='decay_step', nargs='?', default=1000, type=int,
             help='decay step')
-    parser.add_argument('--decay_rate', dest='decay_rate', nargs='?', default=0, type=int,
+    parser.add_argument('--decay_rate', dest='decay_rate', nargs='?', default=1, type=int,
             help='decay rate')
     parser.add_argument('--regularization', dest='regularization', nargs='?', default=0.001, type=float,
             help='regularization strength')
