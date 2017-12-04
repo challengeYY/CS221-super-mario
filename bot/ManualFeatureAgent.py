@@ -17,6 +17,7 @@ class ManualFeatureAgent(QLearnAgent):
         self.featureExtractors.append(BehindFeatureExtractor())
         self.featureExtractors.append(EnemyFeatureExtractor())
         self.featureExtractors.append(PrevActionAFeatureExtractor(options))
+        self.featureExtractors.append(Height5FeatureExtractor())
 
         featureSize = sum([fe.featureSize() for fe in self.featureExtractors])
         print('featureSize', featureSize)
