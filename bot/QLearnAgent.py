@@ -22,6 +22,10 @@ class QLearnAgent(Agent):
         self.frame = None
         self.action = Action.act('Right')
         self.framecache = []  # list of frames for each game, cleared at the end of the game
+<<<<<<< HEAD
+=======
+        self.prevActionsSize = 10
+>>>>>>> ca13db72515ae9c8475c6a66091957db7c897c1e
         self.prevActions = [[0] * len(Action.NAME)] * self.prevActionsSize
         self.gameIter = 0
         self.bestScore = 0
@@ -37,7 +41,12 @@ class QLearnAgent(Agent):
         )
         self.stepCounter = 0
         self.totalReward = 0
+<<<<<<< HEAD
         self.score_log_file = options.model_dir + "/score_log"
+=======
+        self
+        self.score_log_file = options.model_dir + "score_log"
+>>>>>>> ca13db72515ae9c8475c6a66091957db7c897c1e
 
     def featureExtractor(self, window, action):
         raise Exception('Abstract method! should be overridden')

@@ -25,7 +25,17 @@ class ManualFeatureAgent(QLearnAgent):
             tile_row=1,
             tile_col=1,
             window_size=self.windowsize,
+<<<<<<< HEAD
             conv=False
+=======
+            optimizer='adam',
+            lr=0.01,
+            decay_step=1000,
+            decay_rate=0,
+            regularization=0.01,
+            conv=False,
+            model_dir=options.model_dir
+>>>>>>> ca13db72515ae9c8475c6a66091957db7c897c1e
         )
         self.algo.set_model(self.model)
 

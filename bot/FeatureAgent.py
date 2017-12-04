@@ -27,7 +27,17 @@ class FeatureAgent(QLearnAgent):
             tile_row=tile_row,
             tile_col=tile_col,
             window_size=window_size,
+<<<<<<< HEAD
             num_actions=len(self.actions)
+=======
+            num_actions=len(self.actions),
+            optimizer='adam',
+            lr=1e-4,
+            decay_step=1000,
+            decay_rate=1,
+            regularization=0.005,
+            model_dir=options.model_dir
+>>>>>>> ca13db72515ae9c8475c6a66091957db7c897c1e
         )
         self.algo.set_model(self.model)
 
