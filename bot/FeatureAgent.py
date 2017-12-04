@@ -10,11 +10,6 @@ class FeatureAgent(QLearnAgent):
         super(FeatureAgent, self).__init__(options, env)
         self.featureExtractors = []
         self.featureExtractors.append(InfoFeatureExtractor())
-        self.featureExtractors.append(VelocityFeatureExtractor())
-        self.featureExtractors.append(MarioFeatureExtractor())
-        self.featureExtractors.append(FrontFeatureExtractor())
-        self.featureExtractors.append(PitFeatureExtractor())
-        self.featureExtractors.append(BehindFeatureExtractor())
         self.featureExtractors.append(PrevActionsFeatureExtractor(self.prevActionsSize))
 
         self.tileFeatureExtractor = TileFeatureExtractor(options.windowsize)
@@ -31,7 +26,7 @@ class FeatureAgent(QLearnAgent):
             lr=1e-4,
             decay_step=1000,
             decay_rate=1,
-            regularization=0.005,
+            regularization=0.001,
             model_dir=options.model_dir
         )
         self.algo.set_model(self.model)

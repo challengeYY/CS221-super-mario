@@ -33,7 +33,6 @@ class QLearnAgent(Agent):
         self.stepCounter = 0
         self.stepCounterMax = 4
         self.totalReward = 0
-        self
         self.score_log_file = options.model_dir + "score_log"
 
     def featureExtractor(self, window, action):

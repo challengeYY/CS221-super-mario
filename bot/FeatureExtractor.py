@@ -30,13 +30,11 @@ class TileFeatureExtractor(FeatureExtractor):
 
 
 class InfoFeatureExtractor(FeatureExtractor):
-    def featureSize(self): return 4
+    def featureSize(self): return 2
 
     def extract(self, feature, state):
         info = state.get_last_frame().get_info()
         feature['distance'] = info['distance']
-        feature['coins'] = info['coins']
-        feature['player_status'] = info['player_status']
         feature['time'] = info['time']
 
 

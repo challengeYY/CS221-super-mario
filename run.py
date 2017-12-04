@@ -16,7 +16,7 @@ def main():
                         help='Do not render visualization of the game')
     parser.add_argument('--maxGameIter', dest='maxGameIter', nargs='?', default=1, type=int,
                         help='Max number of training iteration')
-    parser.add_argument('--maxCache', dest='maxCache', nargs='?', default=50, type=int,
+    parser.add_argument('--maxCache', dest='maxCache', nargs='?', default=1000, type=int,
                         help='Max number of training iteration')
     parser.add_argument('--window', dest='windowsize', nargs='?', default=3, type=int,
                         help='Number of states (including current) used to train')

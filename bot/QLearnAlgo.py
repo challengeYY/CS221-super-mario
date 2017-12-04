@@ -9,7 +9,7 @@ class QLearningAlgorithm():
         self.discount = discount
         self.featureExtractor = featureExtractor
         self.updateInterval = 10  # number of frames to retrain the model
-        self.updateTargetInterval = 20  # number of frames to retrain the model
+        self.updateTargetInterval = 50 # number of updates to update the target network
         self.updateCounter = 0
         self.updateTargetCounter = 0
         self.batchSize = 20
