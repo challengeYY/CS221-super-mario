@@ -6,6 +6,7 @@ from enum import *
 from util import *
 import pickle
 from QLearnAlgo import *
+import os
 
 
 class QLearnAgent(Agent):
@@ -46,9 +47,9 @@ class QLearnAgent(Agent):
             self.actions = [
                 (['Right', 'A'], 5),
                 (['Right', 'A'], 3),
-                (['Right', 'B'], 3), 
+                (['Right', 'B'], 2), 
                 (['Right', 'A'], 1), 
-                (['Right', 'A', 'B'], 1),
+                (['Right', 'A', 'B'], 2),
                 (['Left', 'A'], 3), 
                 (['Left', 'B'], 3),
                 ([Action.NO_ACTION], 1), 
@@ -81,18 +82,24 @@ class QLearnAgent(Agent):
         print('reward:', state.get_last_frame().get_reward())
         return state
 
-    def act(self, obs, reward, is_finished, info):
-
-        # Customized reward
-        # if stuck at the same location for 5 frames, reward = -1 
+    def get_stuck(self):
         stuck_frames = 5
         if len(self.framecache)>=stuck_frames:
             dists = [frame.get_info()['distance'] for frame in self.framecache[-stuck_frames:]]
             if len(set(dists)) == 1: # dists are the same
-                reward = -0.5
+                return True
+        return False
+
+    def act(self, obs, reward, is_finished, info):
+
+        # Customized reward
+        # if stuck at the same location, small negative reward. Increase exploration probability
+        if self.get_stuck():
+            reward = -0.5
+            self.algo.explorationProb *= 1.2
         # if dead reward = -10
         if is_finished and info['distance'] < 3250:
-            reward = -50 # dead reward
+            reward = self.options.death_penalty # dead reward
 
         self.frame = GameFrame(np.copy(obs), reward, is_finished, info.copy())
         self.totalReward += reward

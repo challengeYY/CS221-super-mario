@@ -44,6 +44,8 @@ def main():
                         help='Number of batched updates before continue playing')
     parser.add_argument('--explorationProb', dest='explorationProb', nargs='?', default=0.5,
             type=float, help='Exploration Probability. Decay over time')
+    parser.add_argument('--death_penalty', dest='death_penalty', nargs='?', default=-100,
+            type=int, help='Death penalty to give if gets killed')
 
     # Model hyper parameters
     parser.add_argument('--optimizer', dest='optimizer', action='store', default='adam', help='SGD optimizer')
@@ -66,12 +68,14 @@ def main():
     if options.isTrain:
         options.model_dir = "model/{:%Y%m%d_%H%M%S}".format(datetime.now())
     else: # testing. loading options
+        model_dir = options.model_dir
         option_path = options.model_dir + '/options.pickle'
         if not os.path.isfile(option_path):
             print('No parameters stored in {}'.format(option_path))
             exit(-1)
         options = pickle.load(open(option_path, 'rb'))
         options.isTrain = False
+        options.model_dir = model_dir
         print('Loading options ...')
         optionDict = vars(options)
         for k in optionDict:
