@@ -85,7 +85,7 @@ class QLearningAlgorithm():
     def getAction(self, state):
         # debug print
         info = self.featureExtractor(state)
-        show = ['pit_ahead', 'ahead_2_height', 'front_2_enemy']
+        show = ['pit_ahead', 'front_1_enemy', 'front_2_enemy', 'front_3_enemy', 'front_4_enemy']
         for k in show:
             print(k, info[k])
         print('reward:', state.get_last_frame().get_reward())
