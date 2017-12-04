@@ -80,16 +80,11 @@ class QModel(object):
             if self.conv:
                 conv_in = tf.reshape(tf.one_hot(tf.cast(self.placeholders['tile'], tf.uint8), 4, axis=-1),
                                      shape=[-1, self.tile_row, self.tile_col, self.window_size * 4])
-                conv_1 = tf.layers.conv2d(conv_in, 64, 5, strides=2, activation=tf.nn.relu,
+                conv_1 = tf.layers.conv2d(conv_in, 64, 7, strides=3, activation=tf.nn.relu,
                                           kernel_regularizer=tf.contrib.layers.l2_regularizer(self.regularization),
                                           kernel_initializer=tf.contrib.layers.xavier_initializer(),
                                           bias_initializer=tf.constant_initializer(0))
-                conv_2 = tf.layers.conv2d(conv_1, 64, 3, strides=1, activation=tf.nn.relu,
-                                          kernel_regularizer=tf.contrib.layers.l2_regularizer(
-                                              self.regularization),
-                                          kernel_initializer=tf.contrib.layers.xavier_initializer(),
-                                          bias_initializer=tf.constant_initializer(0))
-                conv_out = tf.layers.dense(tf.contrib.layers.flatten(conv_2), 512, activation=tf.nn.relu,
+                conv_out = tf.layers.dense(tf.contrib.layers.flatten(conv_1), 512, activation=tf.nn.relu,
                                            kernel_regularizer=tf.contrib.layers.l2_regularizer(self.regularization),
                                            kernel_initializer=tf.contrib.layers.xavier_initializer())
                 h_0 = tf.layers.dense(self.placeholders['info'], 32, activation=tf.nn.relu,
