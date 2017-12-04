@@ -27,8 +27,15 @@ class QLearnAgent(Agent):
         self.bestScore = 0
         self.isTrain = options.isTrain
         self.env = env
-        self.actions = [[Action.NO_ACTION], ['Right'], ['Left'], ['A'], ['Right', 'A'], ['Right', 'B'], ['Right', 'A', 'B'],
-                        ['Left', 'A'], ['Left', 'B'], ['Left', 'A', 'B']]
+        self.actions = [
+            (['Right', 'A'], 6),
+            (['Right', 'B'], 6), 
+            (['Right', 'A'], 1), 
+            (['Right', 'A', 'B'], 1),
+            (['Left', 'A'], 3), 
+            (['Left', 'B'], 3),
+            ([Action.NO_ACTION], 1), 
+        ]
         self.algo = QLearningAlgorithm(
             options=options,
             actions=self.actions,
@@ -37,6 +44,7 @@ class QLearnAgent(Agent):
         )
         self.stepCounter = 0
         self.totalReward = 0
+        self.actionCounter = 0
         self.score_log_file = options.model_dir + "/score_log"
 
     def featureExtractor(self, window, action):
@@ -73,7 +81,11 @@ class QLearnAgent(Agent):
         if self.stepCounter < self.stepCounterMax:
             if is_finished:
                 self.cacheState()
-            return self.action
+            if self.actionCounter <= 0:
+                return Action.empty()
+            else:
+                self.actionCounter -= 1
+                return self.action
 
         # if not enough frame for a window, keep playing 
         if len(self.framecache) < self.windowsize:
@@ -91,7 +103,8 @@ class QLearnAgent(Agent):
             self.action = Action.empty()
         else:
             # get and cache new action 
-            self.action, action_idx = self.algo.getAction(state)
+            (actionOption, self.actionCounter), action_idx = self.algo.getAction(state)
+            self.action = Action.act(actionOption)
             self.algo.actioncache[-1].append(action_idx)
 
         self.recordPrevAction(self.action)

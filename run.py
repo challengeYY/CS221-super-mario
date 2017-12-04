@@ -42,6 +42,8 @@ def main():
                         help='Number of samples to train the model')
     parser.add_argument('--batchPerFeedback', dest='batchPerFeedback', nargs='?', default=5, type=int,
                         help='Number of batched updates before continue playing')
+    parser.add_argument('--explorationProb', dest='explorationProb', nargs='?', default=0.5,
+            type=float, help='Exploration Probability. Decay over time')
 
     # Model hyper parameters
     parser.add_argument('--optimizer', dest='optimizer', action='store', default='adam', help='SGD optimizer')

@@ -11,6 +11,7 @@ class QLearningAlgorithm():
         self.batchSize = options.batchSize 
         self.batchPerFeedback = options.batchPerFeedback
         self.maxCache = options.maxCache
+        self.explorationProb = options.explorationProb
 
         # inits
         self.actions = actions
@@ -22,13 +23,13 @@ class QLearningAlgorithm():
         self.statecache = [[]]  # list of states for each game. A state is a window of frames
         self.actioncache = [[]]  # list of actions for each game
         self.model = None
-        self.explorationProb = 0.05
         self.softmaxExplore = options.softmaxExploration
 
     # reset after each game iteration
     def reset(self):
         self.actioncache.append([])
         self.statecache.append([])
+        self.explorationProb = self.explorationProb / 2
         if len(self.statecache) > self.maxCache:
             self.actioncache.pop(0)
             self.statecache.pop(0)
@@ -62,7 +63,8 @@ class QLearningAlgorithm():
     def formatQ(self, Q):
         info = 'Q: '
         for i, q in enumerate(Q):
-            info += '{}={:.2f}, '.format('_'.join(self.actions[i]), q) 
+            info += '{}={:.2f}, '.format('_'.join(self.actions[i][0]) + '_' +
+                    str(self.actions[i][1]), q) 
         return info
 
     # This algorithm will produce an action given a state.
@@ -93,7 +95,7 @@ class QLearningAlgorithm():
             q = self.getQ(self.model.prediction_vs, state)
             actionIdx, _ = max(enumerate(q), key=operator.itemgetter(1))
             print self.formatQ(q)
-        return Action.act(self.actions[actionIdx]), actionIdx
+        return self.actions[actionIdx], actionIdx
 
     # Call this function to get the step size to update the weights.
 
@@ -127,7 +129,7 @@ class QLearningAlgorithm():
             Vopt = max(self.getQ(self.model.target_vs, state_np1))
             gamma = self.discount
             target = (reward + gamma * Vopt)
-            if state_np1.get_last_frame().get_info()['life'] == 0:
+            if state_np1.get_last_frame().get_is_finished():
                 target = reward
 
             samples.append((tile, info, action, target))
