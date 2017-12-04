@@ -9,8 +9,8 @@ def main():
     parser = argparse.ArgumentParser()
 
     # Game options 
-    # parser.add_argument('--model_dir', dest='model_dir', action='store', default='./model',
-    #         help='Directory to store weights')
+    parser.add_argument('--model_dir', dest='model_dir', action='store', default='./model',
+            help='Directory to store weights')
     parser.add_argument('--player', dest='player', action='store', default='human',
                         help='Specify the player, valid option: human, baseline, feature')
     parser.add_argument('--no-gui', dest='render', action='store_false', default=True,
@@ -22,7 +22,7 @@ def main():
     # Game hyper parameter
     parser.add_argument('--maxGameIter', dest='maxGameIter', nargs='?', default=1, type=int,
                         help='Max number of training iteration')
-    parser.add_argument('--stepCounterMax', dest='stepCounterMax', nargs='?', default=5, type=int,
+    parser.add_argument('--stepCounterMax', dest='stepCounterMax', nargs='?', default=10, type=int,
                         help='Number of frames to advance state')
     parser.add_argument('--updateInterval', dest='updateInterval', nargs='?', default=10, type=int,
                         help='Number of frames to retrain the model')
