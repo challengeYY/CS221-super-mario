@@ -78,6 +78,7 @@ class QLearnAgent(Agent):
         state = GameState(frames[:-1] + [last_frame], self.prevActions)
         self.totalReward = 0
         self.algo.statecache[-1].append(state)
+        print('reward:', state.get_last_frame().get_reward())
         return state
 
     def act(self, obs, reward, is_finished, info):
@@ -91,7 +92,7 @@ class QLearnAgent(Agent):
                 reward = -0.5
         # if dead reward = -10
         if is_finished and info['distance'] < 3250:
-            reward = -10 # dead reward
+            reward = -50 # dead reward
 
         self.frame = GameFrame(np.copy(obs), reward, is_finished, info.copy())
         self.totalReward += reward

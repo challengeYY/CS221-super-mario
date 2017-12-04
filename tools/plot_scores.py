@@ -18,8 +18,8 @@ def main():
     # Game options
     parser.add_argument('--score_log_path', dest='score_log_path', action='store', default='',
                         help='Path to score log file to plot.')
-    parser.add_argument('--smooth_factor', dest='smooth_factor', action='store', default=20,
-                        help='number of points to average over')
+    parser.add_argument('--smooth_factor', dest='smooth_factor', action='store', nargs='?',
+            type=int, default=20, help='number of points to average over')
 
     (options, args) = parser.parse_known_args()
 

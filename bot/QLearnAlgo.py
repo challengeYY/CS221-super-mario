@@ -29,8 +29,9 @@ class QLearningAlgorithm():
     def reset(self):
         self.actioncache.append([])
         self.statecache.append([])
-        if self.options.isTrain and self.explorationProb >= 0.05:
-            self.explorationProb = self.explorationProb * 0.8
+        # boost explorationProb slightly at beginning of the next game
+        if self.options.isTrain and self.explorationProb >= 0.1:
+            self.explorationProb = self.explorationProb * 1.9
         if len(self.statecache) > self.maxCache:
             self.actioncache.pop(0)
             self.statecache.pop(0)
@@ -91,7 +92,6 @@ class QLearningAlgorithm():
         for k in show:
             infostr += k + '=' + str(info[k]) + ', '
         print(infostr)
-        print('reward:', state.get_last_frame().get_reward())
 
         actionIdx = 0
         if self.options.isTrain:
@@ -121,6 +121,10 @@ class QLearningAlgorithm():
                 actionIdx, _ = max(enumerate(q), key=operator.itemgetter(1))
                 print self.formatQ(q)
                 print "Max action: {}".format(self.actions[actionIdx])
+
+        # decay explorationProb over game
+        if self.options.isTrain and self.explorationProb >= 0.1:
+            self.explorationProb = self.explorationProb * 0.99
 
         return self.actions[actionIdx], actionIdx
 
@@ -160,6 +164,7 @@ class QLearningAlgorithm():
             target = (reward + gamma * Vopt)
             if state_np1.get_last_frame().get_is_finished():
                 target = reward
+                print('sampled last state, action', self.actions[action], 'reward', reward)
 
             samples.append((tile, info, action, target))
 
