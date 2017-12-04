@@ -72,10 +72,24 @@ class QLearningAlgorithm():
                     str(self.actions[i][1]), q) 
         return info
 
+    def formatProb(self, Q):
+        info = 'Prob: '
+        for i, q in enumerate(Q):
+            info += '{}={:.5e}, '.format('_'.join(self.actions[i][0]) + '_' +
+                    str(self.actions[i][1]), q) 
+        return info
+
     # This algorithm will produce an action given a state.
     # Here we use the epsilon-greedy algorithm: with probability
     # |explorationProb|, take a random action.
     def getAction(self, state):
+        # debug print
+        info = self.featureExtractor(state)
+        show = ['pit_ahead', 'front_1_enemy', 'front_2_enemy', 'front_3_enemy', 'front_4_enemy']
+        for k in show:
+            print(k, info[k])
+        print('reward:', state.get_last_frame().get_reward())
+
         actionIdx = 0
         if self.options.isTrain:
             rand = random.random()
@@ -86,27 +100,25 @@ class QLearningAlgorithm():
                 if self.softmaxExplore:
                     prob = self.getProb(state)
                     actionIdx = random.choice(range(len(self.actions)), p=prob)
-                    print "Prob: {} selected action: {}".format(prob, self.actions[actionIdx])
+                    print self.formatProb(prob)
+                    print "softmax action: {}".format(self.actions[actionIdx])
                 else:
                     q = self.getQ(self.model.prediction_vs, state)
                     actionIdx, _ = max(enumerate(q), key=operator.itemgetter(1))
                     print self.formatQ(q)
                     print "Max action: {}".format(self.actions[actionIdx])
-        # probs = self.getProb(state)  # soft max prob
-        #    actionIdx = random.choice(range(len(self.actions)),
-        #                              p=probs)
-        #    print "randomly select action id: {}".format(actionIdx)
-        #    print "Probs: {}".format(probs)
         else:
-            q = self.getQ(self.model.prediction_vs, state)
-            actionIdx, _ = max(enumerate(q), key=operator.itemgetter(1))
-            print self.formatQ(q)
-            print "Max action: {}".format(self.actions[actionIdx])
+            if self.softmaxExplore:
+                prob = self.getProb(state)
+                actionIdx = random.choice(range(len(self.actions)), p=prob)
+                print self.formatProb(prob)
+                print "softmax action: {}".format(self.actions[actionIdx])
+            else:
+                q = self.getQ(self.model.prediction_vs, state)
+                actionIdx, _ = max(enumerate(q), key=operator.itemgetter(1))
+                print self.formatQ(q)
+                print "Max action: {}".format(self.actions[actionIdx])
 
-        # info = self.featureExtractor(state)
-        # show = ['pit_ahead', 'ahead_1_height', , 'ahead_2_height']
-        # for k in show:
-            # print(k, info[k])
         return self.actions[actionIdx], actionIdx
 
     # Call this function to get the step size to update the weights.

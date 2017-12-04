@@ -22,7 +22,7 @@ def main():
     # Game hyper parameter
     parser.add_argument('--maxGameIter', dest='maxGameIter', nargs='?', default=1, type=int,
                         help='Max number of training iteration')
-    parser.add_argument('--stepCounterMax', dest='stepCounterMax', nargs='?', default=10, type=int,
+    parser.add_argument('--stepCounterMax', dest='stepCounterMax', nargs='?', default=5, type=int,
                         help='Number of frames to advance state')
     parser.add_argument('--updateInterval', dest='updateInterval', nargs='?', default=10, type=int,
                         help='Number of frames to retrain the model')
@@ -77,6 +77,12 @@ def main():
         for k in optionDict:
             print(k + ' = ' + str(optionDict[k]))
 
+    if not os.path.exists(options.model_dir):
+        os.makedirs(options.model_dir)
+
+    if not options.isTrain:
+        options.maxGameIter = 1
+
     if options.player == 'human':
         agent = HumanAgent(options)
         wrapper = SetPlayingMode('human')
@@ -91,12 +97,6 @@ def main():
         agent = FeatureAgent(options, env)
     elif options.player == 'manual':
         agent = ManualFeatureAgent(options, env)
-
-    if not os.path.exists(options.model_dir):
-        os.makedirs(options.model_dir)
-
-    if not options.isTrain:
-        options.maxGameIter = 1
 
     env.reset()
 
