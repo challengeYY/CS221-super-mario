@@ -2,3 +2,4 @@ gym>=0.8.0
 gym_pull
 pynput
 tensorflow
+matplotlib

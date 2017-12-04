@@ -9,8 +9,8 @@ def main():
     parser = argparse.ArgumentParser()
 
     # Game options 
-    parser.add_argument('--model_dir', dest='model_dir', action='store', default='./model',
-            help='Directory to store weights')
+    # parser.add_argument('--model_dir', dest='model_dir', action='store', default='./model',
+    #         help='Directory to store weights')
     parser.add_argument('--player', dest='player', action='store', default='human',
                         help='Specify the player, valid option: human, baseline, feature')
     parser.add_argument('--no-gui', dest='render', action='store_false', default=True,
@@ -27,8 +27,8 @@ def main():
     parser.add_argument('--updateInterval', dest='updateInterval', nargs='?', default=10, type=int,
                         help='Number of frames to retrain the model')
     parser.add_argument('--updateTargetInterval', dest='updateTargetInterval', nargs='?', default=20, type=int,
-                        help='Number of frames to retrain the model')
-    parser.add_argument('--maxCache', dest='maxCache', nargs='?', default=50, type=int,
+                        help='Number of updates to update the target network')
+    parser.add_argument('--maxCache', dest='maxCache', nargs='?', default=1000, type=int,
                         help='Max number of training iteration')
     parser.add_argument('--softmaxExploration', dest='softmaxExploration', action='store_true', default=False,
                         help='Exploration mode')
@@ -36,7 +36,7 @@ def main():
                         help='Number of frames to include in a state')
     parser.add_argument('--tileWindowSize', dest='tileWindowSize', nargs='?', default=3, type=int,
                         help='Number of frames the TileFeatureExtractor extracts')
-    parser.add_argument('--prevActionsSize', dest='prevActionsSize', nargs='?', default=5, type=int,
+    parser.add_argument('--prevActionsSize', dest='prevActionsSize', nargs='?', default=10, type=int,
                         help='Number of previous action to include in states')
     parser.add_argument('--batchSize', dest='batchSize', nargs='?', default=20, type=int,
                         help='Number of samples to train the model')
@@ -52,7 +52,7 @@ def main():
             help='decay step')
     parser.add_argument('--decay_rate', dest='decay_rate', nargs='?', default=0, type=int,
             help='decay rate')
-    parser.add_argument('--regularization', dest='regularization', nargs='?', default=0.005, type=float,
+    parser.add_argument('--regularization', dest='regularization', nargs='?', default=0.001, type=float,
             help='regularization strength')
     parser.add_argument('--gradient_clip', dest='gradient_clip', nargs='?', default=10, type=int,
             help='gradient_clip')

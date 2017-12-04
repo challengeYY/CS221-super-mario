@@ -70,7 +70,7 @@ class QModel(object):
         self.sess = tf.Session()
         self.setup_tensorboard()
 
-        self.initialize_model()
+        self.load_parameters()
 
     def create_model(self, variable_scope):
         """
@@ -84,15 +84,15 @@ class QModel(object):
                                           kernel_regularizer=tf.contrib.layers.l2_regularizer(self.regularization),
                                           kernel_initializer=tf.contrib.layers.xavier_initializer(),
                                           bias_initializer=tf.constant_initializer(0))
-                conv_2 = tf.layers.conv2d(conv_1, 64, 3, activation=tf.nn.relu,
+                conv_2 = tf.layers.conv2d(conv_1, 64, 3, strides=1, activation=tf.nn.relu,
                                           kernel_regularizer=tf.contrib.layers.l2_regularizer(
                                               self.regularization),
                                           kernel_initializer=tf.contrib.layers.xavier_initializer(),
                                           bias_initializer=tf.constant_initializer(0))
-                conv_out = tf.layers.dense(tf.contrib.layers.flatten(conv_2), 256, activation=tf.nn.relu,
+                conv_out = tf.layers.dense(tf.contrib.layers.flatten(conv_2), 512, activation=tf.nn.relu,
                                            kernel_regularizer=tf.contrib.layers.l2_regularizer(self.regularization),
                                            kernel_initializer=tf.contrib.layers.xavier_initializer())
-                h_0 = tf.layers.dense(self.placeholders['info'], 64, activation=tf.nn.relu,
+                h_0 = tf.layers.dense(self.placeholders['info'], 32, activation=tf.nn.relu,
                                       kernel_regularizer=tf.contrib.layers.l2_regularizer(self.regularization),
                                       kernel_initializer=tf.contrib.layers.xavier_initializer())
                 h_1 = tf.layers.dense(tf.concat([conv_out, h_0], axis=1), 128, activation=tf.nn.relu,
@@ -109,9 +109,6 @@ class QModel(object):
                                       kernel_regularizer=tf.contrib.layers.l2_regularizer(self.regularization),
                                       kernel_initializer=tf.contrib.layers.xavier_initializer())
 
-            h_2 = tf.layers.dense(h_1, 64, activation=tf.nn.relu,
-                                  kernel_regularizer=tf.contrib.layers.l2_regularizer(self.regularization),
-                                  kernel_initializer=tf.contrib.layers.xavier_initializer())
             out = tf.layers.dense(h_1, self.numActions, activation=None,
                                   kernel_regularizer=tf.contrib.layers.l2_regularizer(self.regularization),
                                   kernel_initializer=tf.contrib.layers.xavier_initializer())
@@ -235,7 +232,7 @@ class QModel(object):
         logging.info("Saving options in {} ...".format(ckpt_dir))
         pickle.dump(self.options, open(model_dir + "/options.pickle", 'wb'))
 
-    def initialize_model(self):
+    def load_parameters(self):
         model_dir = self.options.model_dir
         ckpt_dir = model_dir + '/ckpt' + str(self.options.ckpt)
         if not self.options.isTrain:
