@@ -76,36 +76,40 @@ class QModel(object):
         """
         Construct the tf graph.
         """
+        if variable_scope == self.target_vs:
+            regularization = 0.0
+        else:
+            regularization = self.regularization
         with tf.variable_scope(variable_scope, initializer=tf.uniform_unit_scaling_initializer(1.0)):
             if self.conv:
                 conv_in = tf.reshape(tf.one_hot(tf.cast(self.placeholders['tile'], tf.uint8), 4, axis=-1),
                                      shape=[-1, self.tile_row, self.tile_col, self.window_size * 4])
                 conv_1 = tf.layers.conv2d(conv_in, 64, 7, strides=3, activation=tf.nn.relu,
-                                          kernel_regularizer=tf.contrib.layers.l2_regularizer(self.regularization),
+                                          kernel_regularizer=tf.contrib.layers.l2_regularizer(regularization),
                                           kernel_initializer=tf.contrib.layers.xavier_initializer(),
                                           bias_initializer=tf.constant_initializer(0))
                 conv_out = tf.layers.dense(tf.contrib.layers.flatten(conv_1), 512, activation=tf.nn.relu,
-                                           kernel_regularizer=tf.contrib.layers.l2_regularizer(self.regularization),
+                                           kernel_regularizer=tf.contrib.layers.l2_regularizer(regularization),
                                            kernel_initializer=tf.contrib.layers.xavier_initializer())
                 h_0 = tf.layers.dense(self.placeholders['info'], 32, activation=tf.nn.relu,
-                                      kernel_regularizer=tf.contrib.layers.l2_regularizer(self.regularization),
+                                      kernel_regularizer=tf.contrib.layers.l2_regularizer(regularization),
                                       kernel_initializer=tf.contrib.layers.xavier_initializer())
                 h_1 = tf.layers.dense(tf.concat([conv_out, h_0], axis=1), 128, activation=tf.nn.relu,
-                                      kernel_regularizer=tf.contrib.layers.l2_regularizer(self.regularization),
+                                      kernel_regularizer=tf.contrib.layers.l2_regularizer(regularization),
                                       kernel_initializer=tf.contrib.layers.xavier_initializer())
             else:
                 h_0 = tf.layers.dense(self.placeholders['info'], 64, activation=tf.nn.relu,
-                                      kernel_regularizer=tf.contrib.layers.l2_regularizer(self.regularization),
+                                      kernel_regularizer=tf.contrib.layers.l2_regularizer(regularization),
                                       kernel_initializer=tf.contrib.layers.xavier_initializer())
                 h_0 = tf.layers.dense(h_0, 32, activation=tf.nn.relu,
-                                      kernel_regularizer=tf.contrib.layers.l2_regularizer(self.regularization),
+                                      kernel_regularizer=tf.contrib.layers.l2_regularizer(regularization),
                                       kernel_initializer=tf.contrib.layers.xavier_initializer())
                 h_1 = tf.layers.dense(h_0, 32, activation=tf.nn.relu,
-                                      kernel_regularizer=tf.contrib.layers.l2_regularizer(self.regularization),
+                                      kernel_regularizer=tf.contrib.layers.l2_regularizer(regularization),
                                       kernel_initializer=tf.contrib.layers.xavier_initializer())
 
             out = tf.layers.dense(h_1, self.numActions, activation=None,
-                                  kernel_regularizer=tf.contrib.layers.l2_regularizer(self.regularization),
+                                  kernel_regularizer=tf.contrib.layers.l2_regularizer(regularization),
                                   kernel_initializer=tf.contrib.layers.xavier_initializer())
             return (out, tf.nn.softmax(out),
                     tf.contrib.framework.get_variables(variable_scope))

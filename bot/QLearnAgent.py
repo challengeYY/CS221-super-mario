@@ -28,13 +28,16 @@ class QLearnAgent(Agent):
         self.isTrain = options.isTrain
         self.env = env
         self.actions = [
-            (['Right', 'A'], 10),
-            (['Right', 'B'], 5), 
-            (['Right', 'A'], 1), 
-            (['Right', 'A', 'B'], 1),
-            (['Left', 'A'], 3), 
-            (['Left', 'B'], 3),
-            ([Action.NO_ACTION], 1), 
+            (['A'], options.stepCounterMax),
+            (['Right'], options.stepCounterMax),
+            (['Right', 'A'], options.stepCounterMax),
+            (['Right', 'B'], options.stepCounterMax),
+            (['Right', 'A', 'B'], options.stepCounterMax),
+            (['Left'], options.stepCounterMax),
+            (['Left', 'A'], options.stepCounterMax),
+            (['Left', 'B'], options.stepCounterMax),
+            (['Right', 'A', 'B'], options.stepCounterMax),
+            ([Action.NO_ACTION], options.stepCounterMax),
         ]
         self.algo = QLearningAlgorithm(
             options=options,

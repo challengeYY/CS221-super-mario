@@ -10,12 +10,6 @@ class FeatureAgent(QLearnAgent):
         super(FeatureAgent, self).__init__(options, env)
         self.featureExtractors = []
         self.featureExtractors.append(InfoFeatureExtractor())
-        self.featureExtractors.append(VelocityFeatureExtractor())
-        self.featureExtractors.append(MarioFeatureExtractor())
-        self.featureExtractors.append(FrontFeatureExtractor())
-        self.featureExtractors.append(PitFeatureExtractor())
-        self.featureExtractors.append(BehindFeatureExtractor())
-        self.featureExtractors.append(EnemyFeatureExtractor())
         self.featureExtractors.append(PrevActionsFeatureExtractor(self.prevActionsSize))
 
         self.tileFeatureExtractor = TileFeatureExtractor(options)
