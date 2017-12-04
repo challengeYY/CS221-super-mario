@@ -76,6 +76,14 @@ class QLearningAlgorithm():
     # Here we use the epsilon-greedy algorithm: with probability
     # |explorationProb|, take a random action.
     def getAction(self, state):
+        # debug print
+        # info = self.featureExtractor(state)
+        # show = ['pit_ahead', 'ahead_2_height']
+        # for k in show:
+            # print(k, info[k])
+        print('reward:', state.get_last_frame().get_reward(), 'is_finished',
+                state.get_last_frame().get_is_finished())
+
         actionIdx = 0
         if self.options.isTrain:
             rand = random.random()
@@ -92,21 +100,17 @@ class QLearningAlgorithm():
                     actionIdx, _ = max(enumerate(q), key=operator.itemgetter(1))
                     print self.formatQ(q)
                     print "Max action: {}".format(self.actions[actionIdx])
-        # probs = self.getProb(state)  # soft max prob
-        #    actionIdx = random.choice(range(len(self.actions)),
-        #                              p=probs)
-        #    print "randomly select action id: {}".format(actionIdx)
-        #    print "Probs: {}".format(probs)
         else:
-            q = self.getQ(self.model.prediction_vs, state)
-            actionIdx, _ = max(enumerate(q), key=operator.itemgetter(1))
-            print self.formatQ(q)
-            print "Max action: {}".format(self.actions[actionIdx])
+            if self.softmaxExplore:
+                prob = self.getProb(state)
+                actionIdx = random.choice(range(len(self.actions)), p=prob)
+                print "Prob: {} selected action: {}".format(prob, self.actions[actionIdx])
+            else:
+                q = self.getQ(self.model.prediction_vs, state)
+                actionIdx, _ = max(enumerate(q), key=operator.itemgetter(1))
+                print self.formatQ(q)
+                print "Max action: {}".format(self.actions[actionIdx])
 
-        # info = self.featureExtractor(state)
-        # show = ['pit_ahead', 'ahead_1_height', , 'ahead_2_height']
-        # for k in show:
-            # print(k, info[k])
         return self.actions[actionIdx], actionIdx
 
     # Call this function to get the step size to update the weights.
