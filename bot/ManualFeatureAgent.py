@@ -19,20 +19,14 @@ class ManualFeatureAgent(QLearnAgent):
         featureSize = sum([fe.featureSize() for fe in self.featureExtractors])
         print('featureSize', featureSize)
         self.model = QModel(
-            featureSize,
+            options=options,
+            info_size=featureSize,
             num_actions=len(self.actions),
             tile_row=1,
             tile_col=1,
             window_size=self.windowsize,
-            optimizer='adam',
-            lr=0.01,
-            decay_step=1000,
-            decay_rate=0,
-            regularization=0.01,
-            conv=False,
-            model_dir=options.model_dir
+            conv=False
         )
-        self.model.initialize_model(options.model_dir)
         self.algo.set_model(self.model)
 
     def featureExtractor(self, window):

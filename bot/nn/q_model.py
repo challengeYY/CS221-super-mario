@@ -4,7 +4,9 @@ from __future__ import print_function
 
 import logging
 import os
+import pickle
 from datetime import datetime
+from ..enum import *
 
 import tensorflow as tf
 from tensorflow.python.ops import variable_scope as vs
@@ -25,19 +27,16 @@ def get_optimizer(opt):
 
 
 class QModel(object):
-    def __init__(self, info_size, num_actions, tile_row, tile_col, window_size, optimizer='adam', lr=0.01,
-                 decay_step=1000, decay_rate=1, regularization=0, conv=True, save_period=2000, gradient_clip=10,
-                 model_dir='./model/'):
+    def __init__(self, options, info_size, num_actions, tile_row, tile_col, window_size, conv=True):
         """
         Initializes your System
         :param stateVectorLength: Length of vector used to represent state and action.
-        :param optimizer: Name of optimizer.
         """
-        self.regularization = regularization
+        self.options = options
+        self.regularization = options.regularization
         self.conv = conv
-        self.save_period = save_period
-        self.gradient_clip = gradient_clip
-        self.model_dir = model_dir
+        self.save_period = options.save_period
+        self.gradient_clip = options.gradient_clip
 
         # ==== set up placeholder tokens ========
         self.info_size = info_size
@@ -62,7 +61,7 @@ class QModel(object):
         self.predicted_Q[self.target_vs], _, self.scope_vars[self.target_vs] = self.create_model(self.target_vs)
         self.setup_target_update(self.prediction_vs, self.target_vs)
         self.setup_loss()
-        self.setup_train(lr, decay_step, decay_rate, optimizer)
+        self.setup_train(options.lr, options.decay_step, options.decay_rate, options.optimizer)
 
         # ==== set up training/updating procedure ====
         # implement learning rate annealing
@@ -118,7 +117,7 @@ class QModel(object):
 
     def setup_tensorboard(self):
         self.merged_summary = tf.summary.merge_all()
-        self.train_writer = tf.summary.FileWriter(self.model_dir+"logs/",
+        self.train_writer = tf.summary.FileWriter(self.options.model_dir+"/logs/",
                                                   self.sess.graph)
 
     def setup_loss(self):
@@ -205,37 +204,47 @@ class QModel(object):
 
         losses = []
         _, loss, summary, global_step = self.sess.run(
-            [self.train_op, self.loss, self.merged_summary, self.global_step],
+            [self.train_op, self.loss, self. merged_summary, self.global_step],
             feed_dict=feed_dict)
         losses.append(loss)
         self.train_writer.add_summary(summary, global_step)
         if not global_step % self.save_period:
-            self.save_model(self.model_dir)
+            self.save_model()
         return sum(losses) / len(losses)
 
     def update_target_network(self):
         self.sess.run([self.update_target_network_ops])
 
-    def save_model(self, output_path):
+    def save_model(self):
         """
         Save the current graph and weights to the output_path.
         :return:
         """
         # save model weights
-        model_path = output_path + "{:%Y%m%d_%H%M%S}".format(
-            datetime.now()) + "/"
-        if not os.path.exists(model_path):
-            os.makedirs(model_path)
-        logging.info("Saving model parameters...")
-        self.saver.save(self.sess, model_path + "model.weights", global_step=self.global_step)
+        model_dir = self.options.model_dir
+        if not os.path.exists(model_dir):
+            os.makedirs(model_dir)
+        ckpt_dir = model_dir + '/ckpt' + str(self.options.ckpt)
+        if not os.path.exists(ckpt_dir):
+            os.makedirs(ckpt_dir)
+        logging.info("Saving model parameters in {} ...".format(model_dir))
+        self.saver.save(self.sess, ckpt_dir + "/model.weights", global_step=self.global_step)
+        logging.info("Saving options in {} ...".format(ckpt_dir))
+        pickle.dump(self.options, open(model_dir + "/options.pickle", 'wb'))
 
     def load_parameters(self):
-        ckpt = tf.train.get_checkpoint_state(self.model_dir)
-        v2_path = ckpt.model_checkpoint_path + ".index" if ckpt else ""
-        if ckpt and (tf.gfile.Exists(ckpt.model_checkpoint_path) or tf.gfile.Exists(v2_path)):
-            logging.info("Reading model parameters from %s" % ckpt.model_checkpoint_path)
-            self.saver.restore(self.sess, ckpt.model_checkpoint_path)
+        model_dir = self.options.model_dir
+        ckpt_dir = model_dir + '/ckpt' + str(self.options.ckpt)
+        if not self.options.isTrain:
+            ckpt = tf.train.get_checkpoint_state(ckpt_dir)
+            v2_path = ckpt.model_checkpoint_path + ".index" if ckpt else ""
+            if ckpt and (tf.gfile.Exists(ckpt.model_checkpoint_path) or tf.gfile.Exists(v2_path)):
+                logging.info("Reading model parameters from %s" % ckpt.model_checkpoint_path)
+                self.saver.restore(self.sess, ckpt.model_checkpoint_path)
+            else:
+                print("No check points stored in {}".format(ckpt_dir))
+                exit(-1)
         else:
-            logging.info("Created model with fresh parameters.")
+            logging.info("Created model with fresh parameters in {}".format(model_dir))
             self.sess.run(tf.global_variables_initializer())
             logging.info('Num params: %d' % sum(v.get_shape().num_elements() for v in tf.trainable_variables()))
