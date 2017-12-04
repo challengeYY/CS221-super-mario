@@ -22,7 +22,6 @@ class QLearnAgent(Agent):
         self.frame = None
         self.action = Action.act('Right')
         self.framecache = []  # list of frames for each game, cleared at the end of the game
-        self.prevActionsSize = 10
         self.prevActions = [[0] * len(Action.NAME)] * self.prevActionsSize
         self.gameIter = 0
         self.bestScore = 0
