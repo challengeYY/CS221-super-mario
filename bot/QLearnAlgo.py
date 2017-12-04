@@ -42,22 +42,26 @@ class QLearningAlgorithm():
     def getQ(self, vs, state):
         if self.model.conv:
             tile, info = self.featureExtractor(state)
+            info = info.values()
             scores = self.model.inference_Q(vs, [info], tile=[tile])[0]
         else:
             info = self.featureExtractor(state)
             if info is None:
                 return [0]
+            info = info.values()
             scores = self.model.inference_Q(vs, [info])[0]
         return scores
 
     def getProb(self, state):
         if self.model.conv:
             tile, info = self.featureExtractor(state)
+            info = info.values()
             scores = self.model.inference_Prob([info], tile=[tile])[0]
         else:
             info = self.featureExtractor(state)
             if info is None:
                 return [1.0 / len(self.actions)] * len(self.actions)
+            info = info.values()
             scores = self.model.inference_Prob([info])[0]
         return scores
 
@@ -98,6 +102,11 @@ class QLearningAlgorithm():
             actionIdx, _ = max(enumerate(q), key=operator.itemgetter(1))
             print self.formatQ(q)
             print "Max action: {}".format(self.actions[actionIdx])
+
+        # info = self.featureExtractor(state)
+        # show = ['pit_ahead', 'ahead_1_height', , 'ahead_2_height']
+        # for k in show:
+            # print(k, info[k])
         return self.actions[actionIdx], actionIdx
 
     # Call this function to get the step size to update the weights.
@@ -122,9 +131,11 @@ class QLearningAlgorithm():
             state_n = gameStates[stateIdx]
             if self.model.conv:
                 tile, info = self.featureExtractor(state_n)
+                info = info.values()
             else:
                 tile = None
                 info = self.featureExtractor(state_n)
+                info = info.values()
             action = gameActions[stateIdx]
 
             state_np1 = gameStates[stateIdx + 1]
