@@ -6,12 +6,13 @@ from util import *
 class QLearningAlgorithm():
     def __init__(self, options, actions, discount, featureExtractor):
         # hyper parameter
-        self.updateInterval = options.updateInterval 
+        self.updateInterval = options.updateInterval
         self.updateTargetInterval = options.updateTargetInterval
-        self.batchSize = options.batchSize 
+        self.batchSize = options.batchSize
         self.batchPerFeedback = options.batchPerFeedback
         self.maxCache = options.maxCache
-        self.explorationProb = options.explorationProb
+        self.explorationProb = ExplorationRate(options.explorationProb, 0.05, options.explorationPercentile,
+                                               options.explorationGrowthFactor)
 
         # inits
         self.actions = actions
@@ -29,8 +30,9 @@ class QLearningAlgorithm():
     def reset(self):
         self.actioncache.append([])
         self.statecache.append([])
-        if self.options.isTrain and self.explorationProb >= 0.05:
-            self.explorationProb = self.explorationProb * 0.8
+        if self.options.isTrain:
+            self.explorationProb.updateFunction(self.statecache)
+            print 'new midPoint: {}'.format(self.explorationProb.midPoint)
         if len(self.statecache) > self.maxCache:
             self.actioncache.pop(0)
             self.statecache.pop(0)
@@ -69,7 +71,7 @@ class QLearningAlgorithm():
         info = 'Q: '
         for i, q in enumerate(Q):
             info += '{}={:.2f}, '.format('_'.join(self.actions[i][0]) + '_' +
-                    str(self.actions[i][1]), q) 
+                                         str(self.actions[i][1]), q)
         return info
 
     # This algorithm will produce an action given a state.
@@ -79,7 +81,9 @@ class QLearningAlgorithm():
         actionIdx = 0
         if self.options.isTrain:
             rand = random.random()
-            if rand < self.explorationProb:
+            explorationProb = self.explorationProb.getExplorationRate(state.get_last_frame().get_info()['distance'])
+            print "exploration prob: {}".format(explorationProb)
+            if rand < explorationProb:
                 actionIdx = random.choice(range(len(self.actions)))
                 print "randomly select action: {}".format(self.actions[actionIdx])
             else:
@@ -103,9 +107,9 @@ class QLearningAlgorithm():
             print self.formatQ(q)
             print "Max action: {}".format(self.actions[actionIdx])
 
-        # info = self.featureExtractor(state)
-        # show = ['pit_ahead', 'ahead_1_height', , 'ahead_2_height']
-        # for k in show:
+            # info = self.featureExtractor(state)
+            # show = ['pit_ahead', 'ahead_1_height', , 'ahead_2_height']
+            # for k in show:
             # print(k, info[k])
         return self.actions[actionIdx], actionIdx
 

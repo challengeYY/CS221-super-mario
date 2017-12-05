@@ -46,6 +46,10 @@ def main():
                         help='Number of batched updates before continue playing')
     parser.add_argument('--explorationProb', dest='explorationProb', nargs='?', default=0.5,
             type=float, help='Exploration Probability. Decay over time')
+    parser.add_argument('--explorationGrowthFactor', dest='explorationGrowthFactor', nargs='?', default=100.0,
+                        type=float, help='factor which control the increasing/decreasing rate of exploration prob around center.')
+    parser.add_argument('--explorationPercentile', dest='explorationPercentile', nargs='?', default=0.9,
+                        type=float, help='top percentile of playback buffer for deciding midpoint of exploration function.')
 
     # Model hyper parameters
     parser.add_argument('--optimizer', dest='optimizer', action='store', default='adam', help='SGD optimizer')

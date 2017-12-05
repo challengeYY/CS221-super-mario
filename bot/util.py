@@ -1,5 +1,6 @@
 from enum import *
 import numpy as np
+import heapq
 
 
 def out_of_frame(x, y):
@@ -50,10 +51,9 @@ class GameState(object):
         return self.prev_actions
 
     def get_last_n_obs(self, n=1):
-
         obs = [[np.zeros([Window.Width, Window.Height])]] * (n - len(self.frames))
         for i in range(min([n, len(self.frames)])):
-            obs.append(self.frames[-1-i].get_obs())
+            obs.append(self.frames[-1 - i].get_obs())
 
         return obs
 
@@ -100,3 +100,28 @@ def get_velocity(state1, state2):
 
 def get_death_penalty_value(time, distance):
     return (time - Time.TOTAL_GAME_TIME) - distance / 3
+
+
+class ExplorationRate:
+    def __init__(self, maxExplorationRate, minExplorationRate, percentile=0.9, growthFactor=200.0):
+        self.maxExplorationRate = maxExplorationRate
+        self.minExplorationRate = minExplorationRate
+        self.percentile = percentile
+        self.growthFactor = growthFactor
+        self.midPoint = 0.0
+
+    def updateFunction(self, gameStates):
+        def extractDistance(gameState):
+            distance = int(gameState[-1].get_last_frame().get_info()['distance'])
+            return distance
+
+        totalGames = len(gameStates) - 1
+        topn = int(np.ceil((totalGames * (1 - self.percentile))))
+        topn_list = heapq.nlargest(topn, gameStates[:-1], extractDistance)
+        self.midPoint = float(topn_list[-1][-1].get_last_frame().get_info()['distance'])
+        return
+
+    def getExplorationRate(self, distance):
+        mag = (self.maxExplorationRate - self.minExplorationRate) / 2.0
+        center = (self.maxExplorationRate + self.minExplorationRate) / 2.0
+        return mag * (np.arctan((distance - self.midPoint) / self.growthFactor) / (np.pi / 2)) + center
