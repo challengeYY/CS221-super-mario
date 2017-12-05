@@ -74,7 +74,7 @@ def main():
         option_path = options.model_dir + '/options.pickle'
         ckpt = options.ckpt
         load = options.load
-        isTrain = option.isTrain
+        isTrain = options.isTrain
         if not os.path.isfile(option_path):
             print('No parameters stored in {}'.format(option_path))
             exit(-1)
