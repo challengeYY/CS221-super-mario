@@ -102,35 +102,26 @@ class QLearningAlgorithm():
     def getAction(self, state):
         self.debugState(state)
 
+        msg = ""
         actionIdx = 0
-        if self.options.isTrain:
-            rand = random.random()
-            if rand < self.explorationProb:
-                actionIdx = random.choice(range(len(self.actions)))
-                print "randomly select action: {}".format(self.actions[actionIdx])
-            else:
-                if self.softmaxExplore:
-                    prob = self.getProb(state)
-                    actionIdx = random.choice(range(len(self.actions)), p=prob)
-                    print self.formatProb(prob)
-                    print "softmax action: {}".format(self.actions[actionIdx])
-                else:
-                    q = self.getQ(self.model.prediction_vs, state)
-                    actionIdx, _ = max(enumerate(q), key=operator.itemgetter(1))
-                    print self.formatQ(q)
-                    print "Max action: {}".format(self.actions[actionIdx])
+
+        if self.options.isTrain and random.random() < self.explorationProb:
+            actionIdx = random.choice(range(len(self.actions)))
+            msg += "randomly select action: {}".format(self.actions[actionIdx])
         else:
             if self.softmaxExplore:
                 prob = self.getProb(state)
                 actionIdx = random.choice(range(len(self.actions)), p=prob)
-                print self.formatProb(prob)
-                print "softmax action: {}".format(self.actions[actionIdx])
+                msg += self.formatProb(prob)
+                msg += "\nsoftmax action: {}".format(self.actions[actionIdx])
             else:
                 q = self.getQ(self.model.prediction_vs, state)
                 actionIdx, _ = max(enumerate(q), key=operator.itemgetter(1))
-                print self.formatQ(q)
-                print "Max action: {}".format(self.actions[actionIdx])
+                msg += self.formatQ(q)
+                msg += "\nMax action: {}".format(self.actions[actionIdx])
 
+        msg += " exploreProb={}".format(self.explorationProb)
+        print(msg)
         # decay explorationProb over game
         if self.options.isTrain and self.explorationProb >= 0.1:
             self.explorationProb = self.explorationProb * 0.99

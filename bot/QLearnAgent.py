@@ -44,15 +44,15 @@ class QLearnAgent(Agent):
         action_path = options.model_dir + '/action.pickle'
         if self.options.isTrain:
             self.actions = [
+                ([Action.NO_ACTION], 1), 
                 (['Right', 'A'], 6),
                 (['Right', 'A'], 3),
+                (['Right', 'A'], 1), 
                 (['Right', 'B'], 3), 
                 (['Right', 'B'], 1), 
-                (['Right', 'A'], 1), 
                 (['Right', 'A', 'B'], 2),
                 (['Left', 'A'], 3), 
                 (['Left', 'B'], 2),
-                ([Action.NO_ACTION], 1), 
             ]
             pickle.dump(self.actions, open(action_path, 'wb'))
         else:
