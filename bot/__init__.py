@@ -5,5 +5,6 @@ from util import *
 from QLearnAgent import *
 from FeatureAgent import *
 from CNNFeatureAgent import *
+from CNNActionIndexFeatureAgent import *
 from ManualFeatureAgent import *
 from QLearnAlgo import *

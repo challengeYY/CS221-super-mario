@@ -194,7 +194,7 @@ class PrevActionsFeatureExtractor(FeatureExtractor):
                     feature['prevActions-{}-Bit{}'.format(i, j)] = a 
                 i -= 1
 
-class PrevActionIndicesFeatureExtractor(FeatureExtractor):
+class PrevActionIndexFeatureExtractor(FeatureExtractor):
     def __init__(self, options, actions):
         self.options = options
         self.actions = actions

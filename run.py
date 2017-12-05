@@ -99,6 +99,8 @@ def main():
         options.isTrain = False
     elif options.player == 'cnn':
         agent = CNNFeatureAgent(options, env)
+    elif options.player == 'cnnidx':
+        agent = CNNActionIndexFeatureAgent(options, env)
     elif options.player == 'feature':
         agent = FeatureAgent(options, env)
     elif options.player == 'manual':
