@@ -29,8 +29,8 @@ class QLearningAlgorithm():
         self.actioncache.append([])
         self.statecache.append([])
         # boost explorationProb slightly at beginning of the next game
-        if self.options.isTrain and self.explorationProb >= 0.1:
-            self.explorationProb = self.explorationProb * 1.9
+        if self.options.isTrain:
+            self.explorationProb = min(self.explorationProb * 1.4, 0.5)
         if len(self.statecache) > self.maxCache:
             self.actioncache.pop(0)
             self.statecache.pop(0)
@@ -74,7 +74,7 @@ class QLearningAlgorithm():
     def formatProb(self, prob):
         info = 'Prob: '
         for i, p in enumerate(prob):
-            info += '{} {:.5e}, '.format(str(self.actions[i]), p) 
+            info += '{} {:.3e}, '.format(str(self.actions[i]), p) 
         return info
 
     def debugState(self, state):
@@ -120,8 +120,8 @@ class QLearningAlgorithm():
         msg += " exploreProb={}".format(self.explorationProb)
         print(msg)
         # decay explorationProb over game
-        if self.options.isTrain and self.explorationProb >= 0.1:
-            self.explorationProb = self.explorationProb * 0.99
+        if self.options.isTrain:
+            self.explorationProb = max(0.1, self.explorationProb * 0.99)
 
         return actionIdx
 
@@ -161,7 +161,7 @@ class QLearningAlgorithm():
             target = (reward + gamma * Vopt)
             if state_np1.get_last_frame().get_is_finished():
                 target = reward
-                print('sampled last state, action', self.format(self.actions[action]), 'reward', reward)
+                print('sampled last state, action', self.actions[action], 'reward', reward)
 
             samples.append((tile, info, action, target))
 
