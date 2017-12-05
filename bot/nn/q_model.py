@@ -203,7 +203,7 @@ class QModel(object):
             feed_dict=feed_dict)
         losses.append(loss)
         self.train_writer.add_summary(summary, global_step)
-        if not global_step % self.save_period:
+        if not global_step % self.save_period and global_step > 3000:
             self.save_model()
         return sum(losses) / len(losses)
 
@@ -219,7 +219,7 @@ class QModel(object):
         model_dir = self.options.model_dir
         if not os.path.exists(model_dir):
             os.makedirs(model_dir)
-        ckpt_dir = model_dir + '/ckpt' + str(self.options.ckpt)
+        ckpt_dir = model_dir + '/ckpt' + str(self.global_step)
         if not os.path.exists(ckpt_dir):
             os.makedirs(ckpt_dir)
         logging.info("Saving model parameters in {} ...".format(model_dir))
