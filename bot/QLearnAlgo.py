@@ -80,18 +80,27 @@ class QLearningAlgorithm():
                     str(self.actions[i][1]), q) 
         return info
 
-    # This algorithm will produce an action given a state.
-    # Here we use the epsilon-greedy algorithm: with probability
-    # |explorationProb|, take a random action.
-    def getAction(self, state):
+    def debugState(self, state):
         # debug print
-        info = self.featureExtractor(state)
-        show = ['pit_ahead', 'front_1_enemy', 'front_2_enemy', 'front_3_enemy', 'front_4_enemy',
-                'prevActionA']
+        if self.model.conv:
+            tile, info = self.featureExtractor(state)
+        else:
+            info = self.featureExtractor(state)
+        show = []
+        # show += ['pit-ahead']
         infostr = ''
         for k in show:
             infostr += k + '=' + str(info[k]) + ', '
         print(infostr)
+
+        # prevAction = Action.names([info['prevActions-5-Bit{}'.format(i)] for i in range(6)])
+        # print('prevAction', prevAction)
+
+    # This algorithm will produce an action given a state.
+    # Here we use the epsilon-greedy algorithm: with probability
+    # |explorationProb|, take a random action.
+    def getAction(self, state):
+        self.debugState(state)
 
         actionIdx = 0
         if self.options.isTrain:

@@ -40,6 +40,9 @@ class GameState(object):
         self.frames = frames
         self.prev_actions = prev_actions
 
+    def num_frames(self):
+        return len(self.frames)
+
     def get_frames(self):
         return self.frames
 
@@ -51,10 +54,10 @@ class GameState(object):
 
     def get_last_n_obs(self, n=1):
 
-        obs = [[np.zeros([Window.Width, Window.Height])]] * (n - len(self.frames))
-        for i in range(min([n, len(self.frames)])):
-            obs.append(self.frames[-1-i].get_obs())
-
+        obs = [frame.get_obs() for frame in self.frames[-n:]]
+        # obs = [[np.zeros([Window.Width, Window.Height])]] * (n - len(self.frames))
+        # for i in range(min([n, len(self.frames)])):
+            # obs.append(self.frames[-1-i].get_obs())
         return obs
 
 
@@ -100,3 +103,9 @@ def get_velocity(state1, state2):
 
 def get_death_penalty_value(time, distance):
     return (time - Time.TOTAL_GAME_TIME) - distance / 3
+
+def get_stuck(frames):
+    dists = [frame.get_info()['distance'] for frame in frames]
+    if len(set(dists)) == 1: # dists are the same
+        return True
+    return False

@@ -23,7 +23,6 @@ class QLearnAgent(Agent):
         self.frame = None
         self.action = Action.act('Right')
         self.framecache = []  # list of frames for each game, cleared at the end of the game
-        self.prevActions = [(Action.empty(), 5)] * self.prevActionsSize
         self.gameIter = 0
         self.bestScore = 0
         self.isTrain = options.isTrain
@@ -45,13 +44,14 @@ class QLearnAgent(Agent):
         action_path = options.model_dir + '/action.pickle'
         if self.options.isTrain:
             self.actions = [
-                (['Right', 'A'], 5),
+                (['Right', 'A'], 6),
                 (['Right', 'A'], 3),
-                (['Right', 'B'], 2), 
+                (['Right', 'B'], 3), 
+                (['Right', 'B'], 1), 
                 (['Right', 'A'], 1), 
                 (['Right', 'A', 'B'], 2),
                 (['Left', 'A'], 3), 
-                (['Left', 'B'], 3),
+                (['Left', 'B'], 2),
                 ([Action.NO_ACTION], 1), 
             ]
             pickle.dump(self.actions, open(action_path, 'wb'))
@@ -68,33 +68,32 @@ class QLearnAgent(Agent):
     def initAction(self):
         return self.action
 
-    def recordPrevAction(self, action):
-        self.prevActions.pop(0)
-        self.prevActions.append(action[:])
-
     def cacheState(self):
         frames = self.framecache[-self.windowsize:]
+        prevActions = self.algo.actioncache[-1][-self.prevActionsSize:] 
         last_frame = frames[-1]
         last_frame = last_frame.set_reward(self.totalReward)
-        state = GameState(frames[:-1] + [last_frame], self.prevActions)
+        state = GameState(frames[:-1] + [last_frame], prevActions[:])
         self.totalReward = 0
         self.algo.statecache[-1].append(state)
         print('reward:', state.get_last_frame().get_reward())
         return state
 
-    def get_stuck(self):
+    def cacheAction(self):
+        self.algo.actioncache[-1].append(action_idx)
+
+    def is_stuck(self):
         stuck_frames = 5
         if len(self.framecache)>=stuck_frames:
-            dists = [frame.get_info()['distance'] for frame in self.framecache[-stuck_frames:]]
-            if len(set(dists)) == 1: # dists are the same
-                return True
+            frames = self.framecache[-stuck_frames:]
+            get_stuck(frames)
         return False
 
     def act(self, obs, reward, is_finished, info):
 
         # Customized reward
         # if stuck at the same location, small negative reward. Increase exploration probability
-        if self.get_stuck():
+        if self.is_stuck():
             reward = -0.5
             self.algo.explorationProb *= 1.2
         # if dead reward = -10
@@ -141,7 +140,6 @@ class QLearnAgent(Agent):
             self.action = Action.act(actionOption)
             self.algo.actioncache[-1].append(action_idx)
 
-        self.recordPrevAction((self.action, self.actionCounter))
         return self.action
 
     def exit(self):

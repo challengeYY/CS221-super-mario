@@ -47,6 +47,12 @@ class VelocityFeatureExtractor(FeatureExtractor):
         v = dist_delta * 1.0 / len(state.get_frames())
         feature['velocity'] = v
 
+class StuckFeatureExtractor(FeatureExtractor):
+    def featureSize(self): return 1
+
+    def extract(self, feature, state):
+        frames = state.get_frames()
+        return get_stuck(frames) * 1
 
 class MarioFeatureExtractor(FeatureExtractor):
     def featureSize(self):
@@ -167,18 +173,34 @@ class PitFeatureExtractor(FeatureExtractor):
 
 
 class PrevActionsFeatureExtractor(FeatureExtractor):
-    def __init__(self, prevActionsSize):
-        self.prevActionsSize = prevActionsSize
+    def __init__(self, options, actions):
+        self.options = options
+        self.actions = actions
 
     def featureSize(self):
-        return len(Action.NAME) * self.prevActionsSize
+        return len(Action.NAME) * self.options.stepCounterMax * self.options.prevActionsSize
 
     def extract(self, feature, state):
-        prevActions = [action for action, count in state.get_prev_actions()]
-        prevActions = chain.from_iterable(prevActions)
+        prevActions = state.get_prev_actions()
 
-        for i, actionBit in enumerate(prevActions):
-            feature['prevActionBit-{}'.format(i)] = actionBit
+        numPrevActions = self.options.prevActionsSize
+        prevActions = [-1] * (numPrevActions - len(prevActions)) + prevActions
+
+        i = numPrevActions  * self.options.stepCounterMax
+        for actionIdx in prevActions:
+            if actionIdx == -1:
+                counter = 0
+            else:
+                action, counter = self.actions[actionIdx]
+            for _ in range(self.options.stepCounterMax):
+                if counter > 0:
+                    actionList = Action.act(action)
+                else:
+                    actionList = Action.empty()
+                for j, a in enumerate(actionList):
+                    feature['prevActions-{}-Bit{}'.format(i, j)] = a 
+                counter -= 1
+                i -= 1
 
 class PrevActionAFeatureExtractor(FeatureExtractor):
     def __init__(self, options):

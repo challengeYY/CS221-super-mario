@@ -5,16 +5,13 @@ from QLearnAgent import *
 from FeatureExtractor import *
 
 
-class FeatureAgent(QLearnAgent):
+class CNNFeatureAgent(QLearnAgent):
     def __init__(self, options, env):
-        super(FeatureAgent, self).__init__(options, env)
+        super(CNNFeatureAgent, self).__init__(options, env)
         self.featureExtractors = []
         self.featureExtractors.append(InfoFeatureExtractor())
         self.featureExtractors.append(VelocityFeatureExtractor())
         self.featureExtractors.append(MarioFeatureExtractor())
-        self.featureExtractors.append(FrontFeatureExtractor())
-        self.featureExtractors.append(PitFeatureExtractor())
-        self.featureExtractors.append(BehindFeatureExtractor())
         self.featureExtractors.append(EnemyFeatureExtractor())
         self.featureExtractors.append(PrevActionsFeatureExtractor(options, self.actions))
 
