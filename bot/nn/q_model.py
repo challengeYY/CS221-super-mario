@@ -234,7 +234,7 @@ class QModel(object):
     def load_parameters(self):
         model_dir = self.options.model_dir
         ckpt_dir = model_dir + '/ckpt' + str(self.options.ckpt)
-        if not self.options.isTrain:
+        if not self.options.isTrain or self.options.restore:
             ckpt = tf.train.get_checkpoint_state(ckpt_dir)
             v2_path = ckpt.model_checkpoint_path + ".index" if ckpt else ""
             if ckpt and (tf.gfile.Exists(ckpt.model_checkpoint_path) or tf.gfile.Exists(v2_path)):

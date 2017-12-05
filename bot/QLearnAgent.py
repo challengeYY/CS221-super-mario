@@ -64,7 +64,7 @@ class QLearnAgent(Agent):
         frames = self.framecache[-self.windowsize:]
         last_frame = frames[-1]
         last_frame = last_frame.set_reward(self.totalReward)
-        state = GameState(frames[:-1] + [last_frame], self.prevActions)
+        state = GameState(frames[:-1] + [last_frame], self.prevActions[:])
         self.totalReward = 0
         self.algo.statecache[-1].append(state)
         return state

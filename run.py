@@ -17,6 +17,8 @@ def main():
                         help='Do not render visualization of the game')
     parser.add_argument('--train', dest='isTrain', action='store_true', default=False,
                         help='Training mode')
+    parser.add_argument('--restore', dest='restore', action='store_true', default=False,
+                        help='Restore training')
     parser.add_argument('--ckpt', dest='ckpt', nargs='?', default=0, type=int, help='ckpt number of a training')
 
     # Game hyper parameter
@@ -63,15 +65,17 @@ def main():
 
     env = gym.make('ppaquette/SuperMarioBros-1-1-Tiles-v0')
 
-    if options.isTrain:
+    if options.isTrain and not options.restore:
         options.model_dir = "model/{:%Y%m%d_%H%M%S}".format(datetime.now())
     else: # testing. loading options
         option_path = options.model_dir + '/options.pickle'
         if not os.path.isfile(option_path):
             print('No parameters stored in {}'.format(option_path))
             exit(-1)
-        options = pickle.load(open(option_path, 'rb'))
-        options.isTrain = False
+        load_options = pickle.load(open(option_path, 'rb'))
+        load_options.isTrain = options.isTrain
+        load_options.restore = options.restore
+        options = load_options
         print('Loading options ...')
         optionDict = vars(options)
         for k in optionDict:
