@@ -74,12 +74,13 @@ def main():
         option_path = options.model_dir + '/options.pickle'
         ckpt = options.ckpt
         load = options.load
+        isTrain = option.isTrain
         if not os.path.isfile(option_path):
             print('No parameters stored in {}'.format(option_path))
             exit(-1)
         options = pickle.load(open(option_path, 'rb'))
         options.load = load
-        options.isTrain = False
+        options.isTrain = isTrain
         options.model_dir = model_dir
         options.ckpt = ckpt
         print('Loading options ...')
