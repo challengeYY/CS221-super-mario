@@ -111,10 +111,10 @@ class QLearnAgent(Agent):
         # if stuck at the same location, small negative reward. Increase exploration probability
         if self.is_stuck():
             self.algo.explorationProb = min(0.8, self.algo.explorationProb * 1.03)
-            return -0.5
+            reward = -0.5
         # if dead reward = -10
         if is_finished and info['distance'] < 3250:
-            return self.options.death_penalty # dead reward
+            reward = self.options.death_penalty # dead reward
         self.totalReward += reward
         return reward
 
