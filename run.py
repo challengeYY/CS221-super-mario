@@ -17,6 +17,8 @@ def main():
                         help='Do not render visualization of the game')
     parser.add_argument('--train', dest='isTrain', action='store_true', default=False,
                         help='Training mode')
+    parser.add_argument('--load', dest='load', action='store_true', default=False,
+                        help='load weights')
     parser.add_argument('--ckpt', dest='ckpt', nargs='?', default=0, type=int, help='ckpt number of a training')
 
     # Game hyper parameter
@@ -65,16 +67,18 @@ def main():
 
     env = gym.make('ppaquette/SuperMarioBros-1-1-Tiles-v0')
 
-    if options.isTrain:
+    if options.isTrain and not options.load:
         options.model_dir = "model/{:%Y%m%d_%H%M%S}".format(datetime.now())
-    else: # testing. loading options
+    elif not options.isTrain or options.load: # testing. loading options
         model_dir = options.model_dir
         option_path = options.model_dir + '/options.pickle'
         ckpt = options.ckpt
+        load = options.load
         if not os.path.isfile(option_path):
             print('No parameters stored in {}'.format(option_path))
             exit(-1)
         options = pickle.load(open(option_path, 'rb'))
+        options.load = load
         options.isTrain = False
         options.model_dir = model_dir
         options.ckpt = ckpt
