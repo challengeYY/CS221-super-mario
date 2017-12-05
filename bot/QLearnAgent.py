@@ -103,7 +103,7 @@ class QLearnAgent(Agent):
         stuck_frames = 5
         if len(self.framecache)>=stuck_frames:
             frames = self.framecache[-stuck_frames:]
-            get_stuck(frames)
+            return get_stuck(frames)
         return False
     
     def calcReward(self, reward, is_finished, info):
