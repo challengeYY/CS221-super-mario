@@ -100,7 +100,7 @@ class QLearnAgent(Agent):
             self.framecache.pop(0)  # remove frame outside window to save memory
 
     def is_stuck(self):
-        stuck_frames = 5
+        stuck_frames = 8
         if len(self.framecache)>=stuck_frames:
             frames = self.framecache[-stuck_frames:]
             return get_stuck(frames)
@@ -110,7 +110,7 @@ class QLearnAgent(Agent):
         # Customized reward
         # if stuck at the same location, small negative reward. Increase exploration probability
         if self.is_stuck():
-            self.algo.explorationProb = min(0.5, self.algo.explorationProb * 1.1)
+            self.algo.explorationProb = min(0.8, self.algo.explorationProb * 1.03)
             return -0.5
         # if dead reward = -10
         if is_finished and info['distance'] < 3250:

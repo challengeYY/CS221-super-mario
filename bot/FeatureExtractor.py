@@ -194,6 +194,24 @@ class PrevActionsFeatureExtractor(FeatureExtractor):
                     feature['prevActions-{}-Bit{}'.format(i, j)] = a 
                 i -= 1
 
+class PrevActionIndicesFeatureExtractor(FeatureExtractor):
+    def __init__(self, options, actions):
+        self.options = options
+        self.actions = actions
+
+    def featureSize(self):
+        return len(self.actions) * self.options.prevActionsSize
+
+    def extract(self, feature, state):
+        prevActions = state.get_prev_actions()
+
+        numPrevActions = self.options.prevActionsSize
+        prevActions = [0] * (numPrevActions - len(prevActions)) + prevActions
+
+        for i, actionIdx in enumerate(prevActions):
+            for j in range(len(self.actions)):
+                feature['prevActions-{}-Index{}'.format(len(prevActions) - i, j)] = (actionIdx == j) * 1
+
 class PrevActionAFeatureExtractor(FeatureExtractor):
     def __init__(self, options, actions):
         self.options = options
