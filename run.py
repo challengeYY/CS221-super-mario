@@ -40,7 +40,7 @@ def main():
                         help='Number of previous action to include in states')
     parser.add_argument('--batchSize', dest='batchSize', nargs='?', default=20, type=int,
                         help='Number of samples to train the model')
-    parser.add_argument('--batchPerFeedback', dest='batchPerFeedback', nargs='?', default=10, type=int,
+    parser.add_argument('--batchPerFeedback', dest='batchPerFeedback', nargs='?', default=11, type=int,
                         help='Number of batched updates before continue playing')
     parser.add_argument('--explorationProb', dest='explorationProb', nargs='?', default=0.5,
             type=float, help='Exploration Probability. Decay over time')
@@ -70,12 +70,14 @@ def main():
     else: # testing. loading options
         model_dir = options.model_dir
         option_path = options.model_dir + '/options.pickle'
+        ckpt = options.ckpt
         if not os.path.isfile(option_path):
             print('No parameters stored in {}'.format(option_path))
             exit(-1)
         options = pickle.load(open(option_path, 'rb'))
         options.isTrain = False
         options.model_dir = model_dir
+        options.ckpt = ckpt
         print('Loading options ...')
         optionDict = vars(options)
         for k in optionDict:
