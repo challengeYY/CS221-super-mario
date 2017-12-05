@@ -183,6 +183,10 @@ class QLearnAgent(Agent):
         return exit
 
     def handle(self, e):
-        print('encountering error, exiting ...')
+        if self.options.isTrain:
+            print('encountering error, saving model ...')
+            self.model.save_model()
+        else:
+            print('encountering error, exiting ...')
         traceback.print_exc()
         exit(-1)

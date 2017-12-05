@@ -4,6 +4,49 @@ from ppaquette_gym_super_mario.wrappers.control import *
 import argparse
 from bot import *
 
+def load_options(options):
+    model_dir = options.model_dir
+    option_path = options.model_dir + '/options.pickle'
+    ckpt = options.ckpt
+    load = options.load
+    isTrain = options.isTrain
+    maxGameIter = options.maxGameIter
+    if not os.path.isfile(option_path):
+        print('No parameters stored in {}'.format(option_path))
+        exit(-1)
+    options = pickle.load(open(option_path, 'rb'))
+    options.load = load
+    options.isTrain = isTrain
+    options.model_dir = model_dir
+    options.ckpt = ckpt
+    options.maxGameIter = maxGameIter
+    print('Loading options ...')
+    optionDict = vars(options)
+    for k in optionDict:
+        print(k + ' = ' + str(optionDict[k]))
+    return options
+
+def create_agent(options, env):
+    if options.player == 'human':
+        agent = HumanAgent(options)
+        wrapper = SetPlayingMode('human')
+        env = wrapper(env)
+        options.isTrain = False
+    elif options.player == 'baseline':
+        agent = BaselineAgent(options)
+        wrapper = SetPlayingMode('algo')
+        env = wrapper(env)
+        options.isTrain = False
+    elif options.player == 'cnn':
+        agent = CNNFeatureAgent(options, env)
+    elif options.player == 'cnnidx':
+        agent = CNNActionIndexFeatureAgent(options, env)
+    elif options.player == 'feature':
+        agent = FeatureAgent(options, env)
+    elif options.player == 'manual':
+        agent = ManualFeatureAgent(options, env)
+    return agent,env
+
 def main():
     usage = "Usage: run [options]"
     parser = argparse.ArgumentParser()
@@ -70,48 +113,12 @@ def main():
     if options.isTrain and not options.load:
         options.model_dir = "model/{:%Y%m%d_%H%M%S}".format(datetime.now())
     elif not options.isTrain or options.load: # testing. loading options
-        model_dir = options.model_dir
-        option_path = options.model_dir + '/options.pickle'
-        ckpt = options.ckpt
-        load = options.load
-        isTrain = options.isTrain
-        if not os.path.isfile(option_path):
-            print('No parameters stored in {}'.format(option_path))
-            exit(-1)
-        options = pickle.load(open(option_path, 'rb'))
-        options.load = load
-        options.isTrain = isTrain
-        options.model_dir = model_dir
-        options.ckpt = ckpt
-        print('Loading options ...')
-        optionDict = vars(options)
-        for k in optionDict:
-            print(k + ' = ' + str(optionDict[k]))
+        options = load_options(options)
 
     if not os.path.exists(options.model_dir):
         os.makedirs(options.model_dir)
 
-    if not options.isTrain:
-        options.maxGameIter = 1
-
-    if options.player == 'human':
-        agent = HumanAgent(options)
-        wrapper = SetPlayingMode('human')
-        env = wrapper(env)
-        options.isTrain = False
-    elif options.player == 'baseline':
-        agent = BaselineAgent(options)
-        wrapper = SetPlayingMode('algo')
-        env = wrapper(env)
-        options.isTrain = False
-    elif options.player == 'cnn':
-        agent = CNNFeatureAgent(options, env)
-    elif options.player == 'cnnidx':
-        agent = CNNActionIndexFeatureAgent(options, env)
-    elif options.player == 'feature':
-        agent = FeatureAgent(options, env)
-    elif options.player == 'manual':
-        agent = ManualFeatureAgent(options, env)
+    agent,env = create_agent(options, env)
 
     env.reset()
 
