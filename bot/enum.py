@@ -35,15 +35,15 @@ class Action:
         action[Action.index(name)] = 0
 
     @staticmethod
-    def act(name):
+    def act(names):
         action = Action.empty() 
-        if type(name) is list: # a list of names
-            for n in name:
+        if type(names) is list: # a tuple of names
+            for n in names:
                 if n == Action.NO_ACTION:
                     continue
                 action[Action.index(n)] = 1
-        elif name != Action.NO_ACTION: # a single name
-            action[Action.index(name)] = 1
+        elif names != Action.NO_ACTION: # a single names
+            action[Action.index(names)] = 1
         return action
 
     @staticmethod

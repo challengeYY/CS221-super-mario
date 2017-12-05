@@ -2,7 +2,6 @@ from numpy import random
 import operator
 from util import *
 
-
 class QLearningAlgorithm():
     def __init__(self, options, actions, discount, featureExtractor):
         # hyper parameter
@@ -69,15 +68,13 @@ class QLearningAlgorithm():
     def formatQ(self, Q):
         info = 'Q: '
         for i, q in enumerate(Q):
-            info += '{}={:.2f}, '.format('_'.join(self.actions[i][0]) + '_' +
-                    str(self.actions[i][1]), q) 
+            info += '{} {:.2f}, '.format(str(self.actions[i]), q) 
         return info
 
-    def formatProb(self, Q):
+    def formatProb(self, prob):
         info = 'Prob: '
-        for i, q in enumerate(Q):
-            info += '{}={:.5e}, '.format('_'.join(self.actions[i][0]) + '_' +
-                    str(self.actions[i][1]), q) 
+        for i, p in enumerate(prob):
+            info += '{} {:.5e}, '.format(str(self.actions[i]), p) 
         return info
 
     def debugState(self, state):
@@ -126,7 +123,7 @@ class QLearningAlgorithm():
         if self.options.isTrain and self.explorationProb >= 0.1:
             self.explorationProb = self.explorationProb * 0.99
 
-        return self.actions[actionIdx], actionIdx
+        return actionIdx
 
     # Call this function to get the step size to update the weights.
 
@@ -164,7 +161,7 @@ class QLearningAlgorithm():
             target = (reward + gamma * Vopt)
             if state_np1.get_last_frame().get_is_finished():
                 target = reward
-                print('sampled last state, action', self.actions[action], 'reward', reward)
+                print('sampled last state, action', self.format(self.actions[action]), 'reward', reward)
 
             samples.append((tile, info, action, target))
 

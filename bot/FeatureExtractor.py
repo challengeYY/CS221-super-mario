@@ -184,35 +184,31 @@ class PrevActionsFeatureExtractor(FeatureExtractor):
         prevActions = state.get_prev_actions()
 
         numPrevActions = self.options.prevActionsSize
-        prevActions = [-1] * (numPrevActions - len(prevActions)) + prevActions
+        prevActions = [0] * (numPrevActions - len(prevActions)) + prevActions
 
         i = numPrevActions  * self.options.stepCounterMax
-        for actionIdx in prevActions:
-            if actionIdx == -1:
-                counter = 0
-            else:
-                action, counter = self.actions[actionIdx]
-            for _ in range(self.options.stepCounterMax):
-                if counter > 0:
-                    actionList = Action.act(action)
-                else:
-                    actionList = Action.empty()
+        for actions in [self.actions[actionIdx].get_actions() for actionIdx in prevActions]:
+            actions = actions + [[Action.NO_ACTION]] * (self.options.stepCounterMax - len(actions))
+            for actionList in [Action.act(a) for a in actions]:
                 for j, a in enumerate(actionList):
                     feature['prevActions-{}-Bit{}'.format(i, j)] = a 
-                counter -= 1
                 i -= 1
 
 class PrevActionAFeatureExtractor(FeatureExtractor):
-    def __init__(self, options):
+    def __init__(self, options, actions):
         self.options = options
 
     def featureSize(self):
         return 1 
 
     def extract(self, feature, state):
-        action, count = state.get_prev_actions()[-1]
-        if count < self.options.stepCounterMax:
+        actionIdxs = state.get_prev_actions()[-1]
+        if len(actionIdxs) < 0:
             prevA = 0
         else:
-            prevA = action[Action.index('A')]
+            actions = self.actions[actionIdxs[-1]].get_actions()
+            if len(actions) < self.options.stepCounterMax:
+                prevA = 0
+            else:
+                prevA = actions[-1][Action.index('A')]
         feature['prevActionA'] = prevA

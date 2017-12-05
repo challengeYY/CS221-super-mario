@@ -21,13 +21,13 @@ class QLearnAgent(Agent):
         # inits
         self.options = options
         self.frame = None
-        self.action = Action.act('Right')
         self.framecache = []  # list of frames for each game, cleared at the end of the game
         self.gameIter = 0
         self.bestScore = 0
         self.isTrain = options.isTrain
         self.env = env
         self.init_actions()
+        self.actionQueue = []
         self.algo = QLearningAlgorithm(
             options=options,
             actions=self.actions,
@@ -36,23 +36,22 @@ class QLearnAgent(Agent):
         )
         self.stepCounter = 0
         self.totalReward = 0
-        self.actionCounter = 0
         self.score_log_file = options.model_dir + "/score_log"
 
     def init_actions(self):
         options = self.options
         action_path = options.model_dir + '/action.pickle'
+        stepMax = self.options.stepCounterMax
         if self.options.isTrain:
             self.actions = [
-                ([Action.NO_ACTION], 1), 
-                (['Right', 'A'], 6),
-                (['Right', 'A'], 3),
-                (['Right', 'A'], 1), 
-                (['Right', 'B'], 3), 
-                (['Right', 'B'], 1), 
-                (['Right', 'A', 'B'], 2),
-                (['Left', 'A'], 3), 
-                (['Left', 'B'], 2),
+                GameAction([[Action.NO_ACTION]]), 
+                GameAction([['Right', 'A']] * 3), 
+                GameAction([['Right', 'A']] * 1), 
+                GameAction([['Right', 'B']] * 3), 
+                GameAction([['Right', 'B']] * 1), 
+                GameAction([['Right', 'A', 'B']] * 6),
+                GameAction([['Left', 'A']] * 3), 
+                GameAction([['Left', 'B']] * 2),
             ]
             pickle.dump(self.actions, open(action_path, 'wb'))
         else:
@@ -65,8 +64,14 @@ class QLearnAgent(Agent):
     def featureExtractor(self, window, action):
         raise Exception('Abstract method! should be overridden')
 
+    def nextAction(self):
+        if len(self.actionQueue) == 0:
+            return [Action.NO_ACTION]
+        else:
+            return self.actionQueue.pop(0)
+
     def initAction(self):
-        return self.action
+        return Action.act(self.nextAction())
 
     def cacheState(self):
         frames = self.framecache[-self.windowsize:]
@@ -79,8 +84,20 @@ class QLearnAgent(Agent):
         print('reward:', state.get_last_frame().get_reward())
         return state
 
-    def cacheAction(self):
-        self.algo.actioncache[-1].append(action_idx)
+    def cacheNewAction(self, is_finished, state):
+        if is_finished:
+            self.actionQueue = [[Action.NO_ACTION]]
+        else:
+            # get and cache new action 
+            action_idx = self.algo.getAction(state)
+            self.actionQueue = self.actions[action_idx].get_actions()
+            self.algo.actioncache[-1].append(action_idx)
+
+    def cacheFrame(self):
+        # caching new frame
+        self.framecache.append(self.frame)
+        if len(self.framecache) > self.windowsize + 10: # slightly larger for look at stuck_frames
+            self.framecache.pop(0)  # remove frame outside window to save memory
 
     def is_stuck(self):
         stuck_frames = 5
@@ -88,41 +105,37 @@ class QLearnAgent(Agent):
             frames = self.framecache[-stuck_frames:]
             get_stuck(frames)
         return False
-
-    def act(self, obs, reward, is_finished, info):
-
+    
+    def calcReward(self, reward, is_finished, info):
         # Customized reward
         # if stuck at the same location, small negative reward. Increase exploration probability
         if self.is_stuck():
-            reward = -0.5
             self.algo.explorationProb *= 1.2
+            return -0.5
         # if dead reward = -10
         if is_finished and info['distance'] < 3250:
-            reward = self.options.death_penalty # dead reward
+            return self.options.death_penalty # dead reward
+        self.totalReward += reward
+        return reward
+
+    def act(self, obs, reward, is_finished, info):
+
+        reward = self.calcReward(reward, is_finished, info)
 
         self.frame = GameFrame(np.copy(obs), reward, is_finished, info.copy())
-        self.totalReward += reward
 
-        # caching new frame
-        self.framecache.append(self.frame)
-
-        if len(self.framecache) > self.windowsize + 10: # slightly larger for look at stuck_frames
-            self.framecache.pop(0)  # remove frame outside window to save memory
+        self.cacheFrame()
 
         # only update state and action once a while
         self.stepCounter += 1
         if self.stepCounter < self.stepCounterMax:
             if is_finished:
                 self.cacheState()
-            if self.actionCounter <= 0:
-                return Action.empty()
-            else:
-                self.actionCounter -= 1
-                return self.action
+            return Action.act(self.nextAction())
 
         # if not enough frame for a window, keep playing 
         if len(self.framecache) < self.windowsize:
-            return self.action
+            return Action.act(self.nextAction()) 
 
         self.stepCounter = 0
 
@@ -132,15 +145,9 @@ class QLearnAgent(Agent):
         self.algo.incorporateFeedback()
 
         # get new action
-        if is_finished:
-            self.action = Action.empty()
-        else:
-            # get and cache new action 
-            (actionOption, self.actionCounter), action_idx = self.algo.getAction(state)
-            self.action = Action.act(actionOption)
-            self.algo.actioncache[-1].append(action_idx)
+        self.cacheNewAction(is_finished, state)
 
-        return self.action
+        return Action.act(self.nextAction()) 
 
     def exit(self):
         if self.frame is None:

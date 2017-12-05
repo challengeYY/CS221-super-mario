@@ -1,5 +1,7 @@
 from enum import *
 import numpy as np
+from collections import OrderedDict
+
 
 
 def out_of_frame(x, y):
@@ -84,6 +86,23 @@ class GameFrame(object):
     def get_info(self):
         return self.info
 
+class GameAction(object):
+    def __init__(self, actions):
+        self.actions = actions
+
+        count = OrderedDict()
+        for act in self.actions:
+            if tuple(act) not in count:
+                count[tuple(act)] = 0
+            count[tuple(act)] += 1
+        self.name = '_'.join(['{}-{}'.format('-'.join(acts), count[tuple(acts)]) for acts in
+            count.keys()]) 
+
+    def get_actions(self):
+        return self.actions[:]
+
+    def __str__(self):
+        return self.name
 
 # get mario's velocity from state1 to state2
 def get_velocity(state1, state2):
