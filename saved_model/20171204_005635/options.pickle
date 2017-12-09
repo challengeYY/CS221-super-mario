@@ -43,7 +43,7 @@ p16
 I01
 sS'batchSize'
 p17
-I20
+I100
 sS'maxCache'
 p18
 I1000
@@ -59,7 +59,7 @@ S'model/20171204_005635'
 p22
 sS'batchPerFeedback'
 p23
-I5
+I20
 sS'explorationProb'
 p24
 F0.2
@@ -93,5 +93,5 @@ p34
 I3
 sS'save_period'
 p35
-I2000
+I10000
 sb.
