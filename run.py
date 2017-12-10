@@ -39,12 +39,20 @@ def create_agent(options, env):
         options.isTrain = False
     elif options.player == 'cnn':
         agent = CNNFeatureAgent(options, env)
+        wrapper = SetPlayingMode('algo')
+        env = wrapper(env)
     elif options.player == 'cnnidx':
         agent = CNNActionIndexFeatureAgent(options, env)
+        wrapper = SetPlayingMode('algo')
+        env = wrapper(env)
     elif options.player == 'feature':
         agent = FeatureAgent(options, env)
+        wrapper = SetPlayingMode('algo')
+        env = wrapper(env)
     elif options.player == 'manual':
         agent = ManualFeatureAgent(options, env)
+        wrapper = SetPlayingMode('algo')
+        env = wrapper(env)
     return agent,env
 
 def main():
@@ -112,7 +120,7 @@ def main():
 
     if options.isTrain and not options.load:
         options.model_dir = "model/{:%Y%m%d_%H%M%S}".format(datetime.now())
-    elif not options.isTrain or options.load: # testing. loading options
+    elif not options.isTrain and options.load: # testing. loading options
         options = load_options(options)
 
     if not os.path.exists(options.model_dir):
@@ -123,6 +131,7 @@ def main():
     env.reset()
 
     try:
+        print('Started game ...')
         action = agent.initAction()
         while not agent.exit():
             obs, reward, is_finished, info = env.step(action)
