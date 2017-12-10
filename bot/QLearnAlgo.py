@@ -148,7 +148,10 @@ class QLearningAlgorithm():
             gamma = self.discount
             target = (reward + gamma * Vopt)
             if state_np1.get_last_frame().get_is_finished():
-                target = reward
+                if state_np1.get_last_frame().get_info()['distance'] < 3250:
+                    target = reward - 10
+                if state_np1.get_last_frame().get_info()['distance'] >= 3250:
+                    target = reward + 1000
 
             samples.append((tile, info, action, target))
 
