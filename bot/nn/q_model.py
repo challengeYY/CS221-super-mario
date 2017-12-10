@@ -78,21 +78,42 @@ class QModel(object):
         """
         with tf.variable_scope(variable_scope, initializer=tf.uniform_unit_scaling_initializer(1.0)):
             if self.conv:
-                conv_in = tf.reshape(tf.one_hot(tf.cast(self.placeholders['tile'], tf.uint8), 4, axis=-1),
-                                     shape=[-1, self.tile_row, self.tile_col, self.window_size * 4])
-                conv_1 = tf.layers.conv2d(conv_in, 64, 7, strides=3, activation=tf.nn.relu,
+                if self.options.conv_model == 0:
+                    conv_in = tf.reshape(tf.one_hot(tf.cast(self.placeholders['tile'], tf.uint8), 4, axis=-1),
+                                         shape=[-1, self.tile_row, self.tile_col, self.window_size * 4])
+                    conv_1 = tf.layers.conv2d(conv_in, 64, 7, strides=3, activation=tf.nn.relu,
+                                              kernel_regularizer=tf.contrib.layers.l2_regularizer(self.regularization),
+                                              kernel_initializer=tf.contrib.layers.xavier_initializer(),
+                                              bias_initializer=tf.constant_initializer(0))
+                    conv_out = tf.layers.dense(tf.contrib.layers.flatten(conv_1), 512, activation=tf.nn.relu,
+                                               kernel_regularizer=tf.contrib.layers.l2_regularizer(self.regularization),
+                                               kernel_initializer=tf.contrib.layers.xavier_initializer())
+                    h_0 = tf.layers.dense(self.placeholders['info'], 32, activation=tf.nn.relu,
                                           kernel_regularizer=tf.contrib.layers.l2_regularizer(self.regularization),
-                                          kernel_initializer=tf.contrib.layers.xavier_initializer(),
-                                          bias_initializer=tf.constant_initializer(0))
-                conv_out = tf.layers.dense(tf.contrib.layers.flatten(conv_1), 512, activation=tf.nn.relu,
-                                           kernel_regularizer=tf.contrib.layers.l2_regularizer(self.regularization),
-                                           kernel_initializer=tf.contrib.layers.xavier_initializer())
-                h_0 = tf.layers.dense(self.placeholders['info'], 32, activation=tf.nn.relu,
-                                      kernel_regularizer=tf.contrib.layers.l2_regularizer(self.regularization),
-                                      kernel_initializer=tf.contrib.layers.xavier_initializer())
-                h_1 = tf.layers.dense(tf.concat([conv_out, h_0], axis=1), 128, activation=tf.nn.relu,
-                                      kernel_regularizer=tf.contrib.layers.l2_regularizer(self.regularization),
-                                      kernel_initializer=tf.contrib.layers.xavier_initializer())
+                                          kernel_initializer=tf.contrib.layers.xavier_initializer())
+                    h_1 = tf.layers.dense(tf.concat([conv_out, h_0], axis=1), 128, activation=tf.nn.relu,
+                                          kernel_regularizer=tf.contrib.layers.l2_regularizer(self.regularization),
+                                          kernel_initializer=tf.contrib.layers.xavier_initializer())
+                elif self.options.conv_model == 1:
+                    conv_in = tf.reshape(tf.one_hot(tf.cast(self.placeholders['tile'], tf.uint8), 4, axis=-1),
+                                         shape=[-1, self.tile_row, self.tile_col, self.window_size * 4])
+                    conv_1 = tf.layers.conv2d(conv_in, 16, 3, strides=1, activation=tf.nn.relu,
+                                              kernel_regularizer=tf.contrib.layers.l2_regularizer(self.regularization),
+                                              kernel_initializer=tf.contrib.layers.xavier_initializer(),
+                                              bias_initializer=tf.constant_initializer(0))
+                    conv_2 = tf.layers.conv2d(conv_1, 16, 3, strides=1, activation=tf.nn.relu,
+                                              kernel_regularizer=tf.contrib.layers.l2_regularizer(self.regularization),
+                                              kernel_initializer=tf.contrib.layers.xavier_initializer(),
+                                              bias_initializer=tf.constant_initializer(0))
+                    conv_out = tf.layers.dense(tf.contrib.layers.flatten(conv_2), 128, activation=tf.nn.relu,
+                                               kernel_regularizer=tf.contrib.layers.l2_regularizer(self.regularization),
+                                               kernel_initializer=tf.contrib.layers.xavier_initializer())
+                    h_0 = tf.layers.dense(self.placeholders['info'], 32, activation=tf.nn.relu,
+                                          kernel_regularizer=tf.contrib.layers.l2_regularizer(self.regularization),
+                                          kernel_initializer=tf.contrib.layers.xavier_initializer())
+                    h_1 = tf.layers.dense(tf.concat([conv_out, h_0], axis=1), 128, activation=tf.nn.relu,
+                                          kernel_regularizer=tf.contrib.layers.l2_regularizer(self.regularization),
+                                          kernel_initializer=tf.contrib.layers.xavier_initializer())
             else:
                 h_0 = tf.layers.dense(self.placeholders['info'], 64, activation=tf.nn.relu,
                                       kernel_regularizer=tf.contrib.layers.l2_regularizer(self.regularization),
@@ -235,6 +256,7 @@ class QModel(object):
             v2_path = ckpt.model_checkpoint_path + ".index" if ckpt else ""
             if ckpt and (tf.gfile.Exists(ckpt.model_checkpoint_path) or tf.gfile.Exists(v2_path)):
                 logging.info("Reading model parameters from %s" % ckpt.model_checkpoint_path)
+                logging.info('Num params: %d' % sum(v.get_shape().num_elements() for v in tf.trainable_variables()))
                 self.saver.restore(self.sess, ckpt.model_checkpoint_path)
             else:
                 print("No check points stored in {}".format(ckpt_dir))

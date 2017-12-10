@@ -4,34 +4,33 @@ from ppaquette_gym_super_mario.wrappers.control import *
 import argparse
 from bot import *
 
+def print_options(options):
+    optionDict = vars(options)
+    for k in optionDict:
+        print(k + ' = ' + str(optionDict[k]))
+
 def load_options(options):
-    model_dir = options.model_dir
+    new_options = options
     option_path = options.model_dir + '/options.pickle'
-    ckpt = options.ckpt
-    load = options.load
-    isTrain = options.isTrain
-    maxGameIter = options.maxGameIter
-    batchSize = options.batchSize
-    batchPerFeedback = options.batchPerFeedback
-    updateInterval = options.updateInterval
-    updateTargetInterval = options.updateTargetInterval
     if not os.path.isfile(option_path):
         print('No parameters stored in {}'.format(option_path))
         exit(-1)
     options = pickle.load(open(option_path, 'rb'))
-    options.load = load
-    options.isTrain = isTrain
-    options.model_dir = model_dir
-    options.ckpt = ckpt
-    options.maxGameIter = maxGameIter
-    options.batchSize = batchSize
-    options.batchPerFeedback = batchPerFeedback
-    options.updateInterval = updateInterval
-    options.updateTargetInterval = updateTargetInterval
+    options.load = new_options.load
+    options.isTrain = new_options.isTrain
+    options.model_dir = new_options.model_dir
+    options.ckpt = new_options.ckpt
+    options.maxGameIter = new_options.maxGameIter
+    options.batchSize = new_options.batchSize
+    options.batchPerFeedback = new_options.batchPerFeedback
+    options.updateInterval = new_options.updateInterval
+    options.updateTargetInterval = new_options.updateTargetInterval
+    options.save_period = new_options.save_period
+
+    if not hasattr(options, 'conv_model'):
+        options.conv_model = 0
+
     print('Loading options ...')
-    optionDict = vars(options)
-    for k in optionDict:
-        print(k + ' = ' + str(optionDict[k]))
     return options
 
 def create_agent(options, env):
@@ -109,6 +108,8 @@ def main():
             type=int, help='Death penalty to give if gets killed')
 
     # Model hyper parameters
+    parser.add_argument('--conv_model', dest='conv_model', nargs='?', default=0, type=int,
+            help='Specify which conv architecture to use')
     parser.add_argument('--optimizer', dest='optimizer', action='store', default='adam', help='SGD optimizer')
     parser.add_argument('--lr', dest='lr', nargs='?', default=1e-4, type=float, help='learning rate')
     parser.add_argument('--decay_step', dest='decay_step', nargs='?', default=1000, type=int,
@@ -128,6 +129,7 @@ def main():
 
     if options.load: # testing. loading options
         options = load_options(options)
+    print_options(options)
 
     if options.isTrain and not options.load:
         options.model_dir = "model/{:%Y%m%d_%H%M%S}".format(datetime.now())
