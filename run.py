@@ -11,6 +11,10 @@ def load_options(options):
     load = options.load
     isTrain = options.isTrain
     maxGameIter = options.maxGameIter
+    batchSize = options.batchSize
+    batchPerFeedback = options.batchPerFeedback
+    updateInterval = options.updateInterval
+    updateTargetInterval = options.updateTargetInterval
     if not os.path.isfile(option_path):
         print('No parameters stored in {}'.format(option_path))
         exit(-1)
@@ -20,6 +24,10 @@ def load_options(options):
     options.model_dir = model_dir
     options.ckpt = ckpt
     options.maxGameIter = maxGameIter
+    options.batchSize = batchSize
+    options.batchPerFeedback = batchPerFeedback
+    options.updateInterval = updateInterval
+    options.updateTargetInterval = updateTargetInterval
     print('Loading options ...')
     optionDict = vars(options)
     for k in optionDict:
@@ -118,10 +126,11 @@ def main():
 
     env = gym.make('ppaquette/SuperMarioBros-1-1-Tiles-v0')
 
-    if options.isTrain and not options.load:
-        options.model_dir = "model/{:%Y%m%d_%H%M%S}".format(datetime.now())
     if options.load: # testing. loading options
         options = load_options(options)
+
+    if options.isTrain and not options.load:
+        options.model_dir = "model/{:%Y%m%d_%H%M%S}".format(datetime.now())
 
     if not os.path.exists(options.model_dir):
         os.makedirs(options.model_dir)
