@@ -120,7 +120,7 @@ def main():
 
     if options.isTrain and not options.load:
         options.model_dir = "model/{:%Y%m%d_%H%M%S}".format(datetime.now())
-    elif not options.isTrain and options.load: # testing. loading options
+    if options.load: # testing. loading options
         options = load_options(options)
 
     if not os.path.exists(options.model_dir):
