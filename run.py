@@ -10,6 +10,7 @@ def print_options(options):
         print(k + ' = ' + str(optionDict[k]))
 
 def load_options(options):
+    print('Loading options ...')
     new_options = options
     option_path = options.model_dir + '/options.pickle'
     if not os.path.isfile(option_path):
@@ -33,7 +34,18 @@ def load_options(options):
     if not hasattr(options, 'partial_reward'):
         options.partial_reward = False
 
-    print('Loading options ...')
+    if options.ckpt < 0:
+        for d in [x for x in os.listdir(options.model_dir)]:
+            if 'ckpt' in d:
+                ckpt = int(d.split('ckpt')[1])
+                if options.ckpt < ckpt:
+                    options.ckpt = ckpt
+        if options.ckpt < 0:
+            print('No ckpt in {}!'.format(options.model_dir))
+            exit(-1)
+        else:
+            print('Loading latest ckpt{}...'.format(options.ckpt))
+
     return options
 
 def create_agent(options, env):
@@ -80,7 +92,7 @@ def main():
                         help='Training mode')
     parser.add_argument('--load', dest='load', action='store_true', default=False,
                         help='load weights')
-    parser.add_argument('--ckpt', dest='ckpt', nargs='?', default=0, type=int, help='ckpt number of a training')
+    parser.add_argument('--ckpt', dest='ckpt', nargs='?', default=-1, type=int, help='ckpt number of a training')
 
     # Game hyper parameter
     parser.add_argument('--maxGameIter', dest='maxGameIter', nargs='?', default=1, type=int,

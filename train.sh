@@ -55,11 +55,12 @@ source .env/bin/activate
   #--load --model_dir model/20171212_182911/ --ckpt=32000
 #python tools/plot_scores.py --score_log_path model/20171212_182911/score_log 
 
+# tucson
 #./xvfb-run-safe -s "-screen 0 1400x900x24" python run.py --player=cnn --train \
   #--conv_model=1 \
   #--partial_reward \
   #--maxGameIter=3000 \
-  #--load --model_dir model/20171213_021909/ --ckpt 0
+  #--load --model_dir model/20171213_021909/
 #python tools/plot_scores.py --score_log_path model/20171213_021909/score_log 
 
 set +o xtrace
