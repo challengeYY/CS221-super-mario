@@ -30,6 +30,9 @@ def load_options(options):
     if not hasattr(options, 'conv_model'):
         options.conv_model = 0
 
+    if not hasattr(options, 'partial_reward'):
+        options.partial_reward = False
+
     print('Loading options ...')
     return options
 
@@ -106,6 +109,8 @@ def main():
             type=float, help='Exploration Probability. Decay over time')
     parser.add_argument('--death_penalty', dest='death_penalty', nargs='?', default=-100,
             type=int, help='Death penalty to give if gets killed')
+    parser.add_argument('--partial_reward', dest='partial_reward', action='store_true', default=False,
+                        help='Enable partial reward')
 
     # Model hyper parameters
     parser.add_argument('--conv_model', dest='conv_model', nargs='?', default=0, type=int,
@@ -141,17 +146,17 @@ def main():
 
     env.reset()
 
-    try:
-        print('Started game ...')
-        action = agent.initAction()
-        while not agent.exit():
+    print('Started game ...')
+    action = agent.initAction()
+    while not agent.exit():
+        try:
             obs, reward, is_finished, info = env.step(action)
             if options.render:
                 env.render()
 
             action = agent.act(obs, reward, is_finished, info)
-    except Exception as e:
-        agent.handle(e)
+        except Exception as e:
+            agent.handle(e)
 
 if __name__ == "__main__":
     main()

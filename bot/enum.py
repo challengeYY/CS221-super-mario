@@ -1,4 +1,6 @@
 
+TOTAL_DIST = 3250
+
 class Tile:
     NAME = ['EmptySpace', 'Object', 'Enemy', 'Mario']
     EMPTY_SPACE = 0

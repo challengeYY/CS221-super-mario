@@ -36,7 +36,11 @@ class QLearnAgent(Agent):
         )
         self.stepCounter = 0
         self.totalReward = 0
+        self.init_game_ckpt()
         self.score_log_file = options.model_dir + "/score_log"
+
+    def init_game_ckpt(self):
+        self.game_ckpts = [pct * TOTAL_DIST for pct in [0.2, 0.4, 0.6, 0.8]]
 
     def init_actions(self):
         options = self.options
@@ -81,7 +85,7 @@ class QLearnAgent(Agent):
         state = GameState(frames[:-1] + [last_frame], prevActions[:])
         self.totalReward = 0
         self.algo.statecache[-1].append(state)
-        print('reward:', state.get_last_frame().get_reward())
+        print('reward:', last_frame.get_reward(), 'distance', last_frame.get_info()['distance'])
         return state
 
     def cacheNewAction(self, is_finished, state):
@@ -113,8 +117,17 @@ class QLearnAgent(Agent):
             self.algo.explorationProb = min(0.8, self.algo.explorationProb * 1.03)
             reward = -0.5
         # if dead reward = -10
-        if is_finished and info['distance'] < 3250:
+        if is_finished and info['distance'] < TOTAL_DIST:
             reward = self.options.death_penalty # dead reward
+
+        # partial reward if pass through certain check point
+        if self.options.partial_reward and len(self.game_ckpts) > 0:
+            ckpt = self.game_ckpts[0]
+            if info['distance'] > ckpt:
+                print('Passing ckpt {}'.format(ckpt))
+                reward += 50
+                self.game_ckpts.pop(0)
+
         self.totalReward += reward
         return reward
 
@@ -142,7 +155,9 @@ class QLearnAgent(Agent):
         # caching new state
         state = self.cacheState()
 
-        self.algo.incorporateFeedback()
+        # If reload game and haven't play enough, don't incooperate feedback yet
+        if not (self.options.isTrain and self.options.load and len(self.algo.statecache) < 20):
+            self.algo.incorporateFeedback()
 
         # get new action
         self.cacheNewAction(is_finished, state)
@@ -161,11 +176,12 @@ class QLearnAgent(Agent):
                     print "Best Score: {}".format(self.bestScore)
                 with open(self.score_log_file,'a+') as score_log :
                     score_log.write("{}\n".format(distance))
-                print "Score: {}".format(distance)
+                print "model {} Game {} Score: {}".format(self.options.model_dir, self.gameIter, distance)
             self.gameIter += 1
             self.env.reset()
             self.framecache = []
             self.totalReward = 0
+            self.init_game_ckpt()
             self.algo.reset()
 
         info = self.frame.get_info()
@@ -186,7 +202,10 @@ class QLearnAgent(Agent):
         if self.options.isTrain:
             print('encountering error, saving model ...')
             self.model.save_model()
+        if type(e) is KeyError:
+            print('Emulator hang. Keep playing ...')
+            self.env.reset()
         else:
             print('encountering error, exiting ...')
-        traceback.print_exc()
-        exit(-1)
+            traceback.print_exc()
+            exit(-1)
