@@ -5,27 +5,34 @@ set -o xtrace
 source .env/bin/activate
 
 # tucson
+MODEL=saved_model/CNN_action
 #./xvfb-run-safe -s "-screen 0 1400x900x24" python run.py --player=cnn --train \
   #--maxGameIter=3000 \
-  #--load --model_dir saved_model/CNN_action/
-#python tools/plot_scores.py --score_log_path saved_model/CNN_action/score_log 
+  #--load --model_dir $MODEL/
+#python tools/plot_scores.py --score_log_path $MODEL/score_log 
+git add -f $MODEL/score_log
 
 # Cannot load parameter for some reason
+MODEL=model/20171210_154650
 #./xvfb-run-safe -s "-screen 1 1400x900x24" python run.py --player=cnn --train \
   #--conv_model=1 \
   #--maxGameIter=3000 \
-  #--load --model_dir model/20171210_154650/
-#python tools/plot_scores.py --score_log_path model/20171210_154650/score_log 
+  #--load --model_dir $MODEL/
+#python tools/plot_scores.py --score_log_path $MODEL/score_log 
+git add -f $MODEL/score_log
 
+MODEL=model/20171212_181553
 #./xvfb-run-safe -s "-screen 0 1400x900x24" python run.py --player=cnn --train \
   #--conv_model=1 \
   #--maxGameIter=3000 \
   #--batchSize=64 \
   #--batchPerFeedback=16 \
   #--updateInterval=64 \
-  #--load --model_dir model/20171212_181553/
-#python tools/plot_scores.py --score_log_path model/20171212_181553/score_log 
+  #--load --model_dir $MODEL/
+#python tools/plot_scores.py --score_log_path $MODEL/score_log 
+git add -f $MODEL/score_log
 
+MODEL=model/20171212_210533
 #./xvfb-run-safe -s "-screen 0 1400x900x24" python run.py --player=cnn --train \
   #--conv_model=1 \
   #--maxGameIter=3000 \
@@ -33,36 +40,45 @@ source .env/bin/activate
   #--batchPerFeedback=16 \
   #--updateInterval=256 \
   #--save_period=500 \
-  #--load --model_dir model/20171212_210533/
-#python tools/plot_scores.py --score_log_path model/20171212_210533/score_log 
+  #--load --model_dir $MODEL/
+#python tools/plot_scores.py --score_log_path $MODEL/score_log 
+git add -f $MODEL/score_log
 
 #tucson
+MODEL=model/20171212_182429
 #./xvfb-run-safe -s "-screen 0 1400x900x24" python run.py --player=cnn --train \
   #--conv_model=1 \
   #--maxGameIter=3000 \
-  #--load --model_dir model/20171212_182429/
-#python tools/plot_scores.py --score_log_path model/20171212_182429/score_log 
+  #--load --model_dir $MODEL/
+#python tools/plot_scores.py --score_log_path $MODEL/score_log 
+git add -f $MODEL/score_log
 
+MODEL=model/20171212_182700
 #./xvfb-run-safe -s "-screen 0 1400x900x24" python run.py --player=cnn --train \
   #--conv_model=1 \
   #--maxGameIter=3000 \
   #--lr=1e-3 \
-  #--load --model_dir model/20171212_182700/
-#python tools/plot_scores.py --score_log_path model/20171212_182700/score_log 
+  #--load --model_dir $MODEL/
+#python tools/plot_scores.py --score_log_path $MODEL/score_log 
+git add -f $MODEL/score_log
 
+MODEL=model/20171212_182911
 #./xvfb-run-safe -s "-screen 0 1400x900x24" python run.py --player=cnn --train \
   #--conv_model=1 \
   #--maxGameIter=3000 \
   #--lr=1e-2 \
-  #--load --model_dir model/20171212_182911/
-#python tools/plot_scores.py --score_log_path model/20171212_182911/score_log 
+  #--load --model_dir $MODEL/
+#python tools/plot_scores.py --score_log_path $MODEL/score_log 
+git add -f $MODEL/score_log
 
 # tucson
+MODEL=model/20171213_021909
 #./xvfb-run-safe -s "-screen 0 1400x900x24" python run.py --player=cnn --train \
   #--conv_model=1 \
   #--partial_reward \
   #--maxGameIter=3000 \
-  #--load --model_dir model/20171213_021909/
-#python tools/plot_scores.py --score_log_path model/20171213_021909/score_log 
+  #--load --model_dir $MODEL/
+#python tools/plot_scores.py --score_log_path $MODEL/score_log 
+git add -f $MODEL/score_log
 
 set +o xtrace
