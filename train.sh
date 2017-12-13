@@ -36,6 +36,7 @@ source .env/bin/activate
   #--load --model_dir model/20171212_210533/
 #python tools/plot_scores.py --score_log_path model/20171212_210533/score_log 
 
+#tucson
 #./xvfb-run-safe -s "-screen 0 1400x900x24" python run.py --player=cnn --train \
   #--conv_model=1 \
   #--maxGameIter=3000 \
