@@ -10,6 +10,14 @@ def smoothByAverage(scores, factor):
         newScores.append(float(sum(scores[i - factor: i + 1])) / factor)
     return newScores
 
+def load_score(path):
+    indices = []
+    scores = []
+    with open(path, mode='r') as score_log:
+        for index, score in enumerate(score_log):
+            indices.append(index)
+            scores.append(int(score))
+    return indices, scores
 
 def main():
     usage = "Usage: run [options]"
@@ -23,12 +31,7 @@ def main():
 
     (options, args) = parser.parse_known_args()
 
-    indices = []
-    scores = []
-    with open(options.score_log_path, mode='r') as score_log:
-        for index, score in enumerate(score_log):
-            indices.append(index)
-            scores.append(int(score))
+    indices, scores = load_score(options.score_log_path)
 
     scores = smoothByAverage(scores, options.smooth_factor)
 
