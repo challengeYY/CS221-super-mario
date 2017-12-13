@@ -9,6 +9,7 @@ source .env/bin/activate
   #--load --model_dir saved_model/CNN_action/ --ckpt=144762 \
 #python tools/plot_scores.py --score_log_path saved_model/CNN_action/score_log 
 
+# tucson
 #./xvfb-run-safe -s "-screen 1 1400x900x24" python run.py --player=cnn --train \
   #--conv_model=1 \
   #--maxGameIter=3000 \
