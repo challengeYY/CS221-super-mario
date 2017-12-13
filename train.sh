@@ -4,9 +4,10 @@ set -o xtrace
 
 source .env/bin/activate
 
+# tucson
 #./xvfb-run-safe -s "-screen 0 1400x900x24" python run.py --player=cnn --train \
   #--maxGameIter=3000 \
-  #--load --model_dir saved_model/CNN_action/ --ckpt=144762 \
+  #--load --model_dir saved_model/CNN_action/ --ckpt=154000 \
 #python tools/plot_scores.py --score_log_path saved_model/CNN_action/score_log 
 
 #./xvfb-run-safe -s "-screen 1 1400x900x24" python run.py --player=cnn --train \
