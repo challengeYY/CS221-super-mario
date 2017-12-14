@@ -215,13 +215,14 @@ class PrevActionIndexFeatureExtractor(FeatureExtractor):
 class PrevActionAFeatureExtractor(FeatureExtractor):
     def __init__(self, options, actions):
         self.options = options
+        self.actions = actions
 
     def featureSize(self):
         return 1 
 
     def extract(self, feature, state):
-        actionIdxs = state.get_prev_actions()[-1]
-        if len(actionIdxs) < 0:
+        actionIdxs = state.get_prev_actions()
+        if len(actionIdxs) < 1:
             prevA = 0
         else:
             actions = self.actions[actionIdxs[-1]].get_actions()

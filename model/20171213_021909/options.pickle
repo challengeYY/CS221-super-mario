@@ -12,7 +12,7 @@ Rp4
 (dp5
 S'load'
 p6
-I00
+I01
 sS'partial_reward'
 p7
 I01
@@ -58,7 +58,7 @@ p21
 F0.0001
 sS'model_dir'
 p22
-S'model/20171213_021909'
+S'model/20171213_021909/'
 p23
 sS'batchPerFeedback'
 p24
@@ -87,7 +87,7 @@ p32
 I3
 sS'ckpt'
 p33
-I0
+I128601
 sS'softmaxExploration'
 p34
 I00

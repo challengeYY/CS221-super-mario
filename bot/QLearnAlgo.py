@@ -29,7 +29,7 @@ class QLearningAlgorithm():
         self.actioncache.append([])
         self.statecache.append([])
         # boost explorationProb slightly at beginning of the next game
-        if self.options.isTrain:
+        if self.options.isTrain and not self.options.fix_exprate:
             self.explorationProb = min(self.explorationProb * 1.2, 0.5)
         if len(self.statecache) > self.maxCache:
             self.actioncache.pop(0)
@@ -120,7 +120,7 @@ class QLearningAlgorithm():
         msg += " exploreProb={}".format(self.explorationProb)
         print(msg)
         # decay explorationProb over game
-        if self.options.isTrain:
+        if self.options.isTrain and not self.options.fix_exprate:
             self.explorationProb = max(0.1, self.explorationProb * 0.98)
 
         return actionIdx

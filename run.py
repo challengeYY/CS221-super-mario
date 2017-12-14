@@ -34,6 +34,9 @@ def load_options(options):
     if not hasattr(options, 'partial_reward'):
         options.partial_reward = False
 
+    if not hasattr(options, 'fix_exprate'):
+        options.fix_exprate = False
+
     if options.ckpt < 0:
         for d in [x for x in os.listdir(options.model_dir)]:
             if 'ckpt' in d:
@@ -119,6 +122,8 @@ def main():
                         help='Number of batched updates before continue playing')
     parser.add_argument('--explorationProb', dest='explorationProb', nargs='?', default=0.5,
             type=float, help='Exploration Probability. Decay over time')
+    parser.add_argument('--fix_exprate', dest='fix_exprate', action='store_true', default=False,
+            help='turn off adaptively adjusting exploration rate')
     parser.add_argument('--death_penalty', dest='death_penalty', nargs='?', default=-100,
             type=int, help='Death penalty to give if gets killed')
     parser.add_argument('--partial_reward', dest='partial_reward', action='store_true', default=False,

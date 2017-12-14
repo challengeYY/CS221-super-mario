@@ -113,7 +113,7 @@ class QLearnAgent(Agent):
     def calcReward(self, reward, is_finished, info):
         # Customized reward
         # if stuck at the same location, small negative reward. Increase exploration probability
-        if self.is_stuck():
+        if self.is_stuck() and not self.options.fix_exprate:
             self.algo.explorationProb = min(0.8, self.algo.explorationProb * 1.03)
             reward = -0.5
         # if dead reward = -10

@@ -7,6 +7,7 @@ log.txt
 
 # Tensorflow
 /model/
+/saved_model/
 /train/
 
 # Setuptools distribution and build folders.
