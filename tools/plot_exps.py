@@ -35,9 +35,9 @@ def plot_exprate_comp(options):
 
 def plot_reward_comp(options):
     labels = {}
-    labels['model/20171214_160447'] = 'distance reward only'
-    labels['model/20171212_182429'] = 'distance reward + death penalty + stuck penalty'
-    labels['model/20171213_021909'] = 'distance reward + death penalty + stuck penalty + ckpt reward'
+    labels['model/20171214_160447'] = 'distance_only'
+    labels['model/20171212_182429'] = 'distance+death+stuck'
+    labels['model/20171213_021909'] = 'distance+death+stuck+ckpt'
 
     plot(options, labels, 'reward_comp', xlim=None)
     return options
