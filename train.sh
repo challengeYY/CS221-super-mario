@@ -82,6 +82,16 @@ MODEL=model/20171213_021909
 git add -f $MODEL/score_log
 
 # tucson
+MODEL=model/20171214_160447
+#./xvfb-run-safe -s "-screen 0 1400x900x24" python run.py --player=cnn --train \
+  #--conv_model=1 \
+  #--dist_reward_only \
+  #--maxGameIter=3000 \
+  #--load --model_dir $MODEL/
+#python tools/plot_scores.py --score_log_path $MODEL/score_log 
+git add -f $MODEL/score_log
+
+# tucson
 MODEL=model/20171213_164419
 #./xvfb-run-safe -s "-screen 0 1400x900x24" python run.py --player=manual --train \
   #--maxGameIter=3000 \

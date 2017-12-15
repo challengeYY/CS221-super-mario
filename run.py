@@ -37,6 +37,9 @@ def load_options(options):
     if not hasattr(options, 'fix_exprate'):
         options.fix_exprate = False
 
+    if not hasattr(options, 'dist_reward_only'):
+        options.dist_reward_only = False
+
     if options.ckpt < 0:
         for d in [x for x in os.listdir(options.model_dir)]:
             if 'ckpt' in d:
@@ -128,6 +131,8 @@ def main():
             type=int, help='Death penalty to give if gets killed')
     parser.add_argument('--partial_reward', dest='partial_reward', action='store_true', default=False,
                         help='Enable partial reward')
+    parser.add_argument('--dist_reward_only', dest='dist_reward_only', action='store_true', default=False,
+                        help='Only use distance as reward')
 
     # Model hyper parameters
     parser.add_argument('--conv_model', dest='conv_model', nargs='?', default=0, type=int,
