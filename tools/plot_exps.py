@@ -20,10 +20,19 @@ def plot(options, labels, name, xlim=None):
     fig.savefig('figs/' + name + ".png")
     plt.show()
 
+def plot_exprate_comp(options):
+    labels = {}
+    labels['model/20171213_164419'] = 'Adaptive Exploration Rate'
+    labels['model/20171213_165416'] = 'Fixed Exploration Rate = 0.3'
+
+    plot(options, labels, 'exprate_comp', xlim=None)
+    return options
+
 def plot_reward_comp(options):
     labels = {}
-    labels['model/20171212_182429'] = 'No partial reward'
-    labels['model/20171213_021909'] = 'Partial reward at checkpoints'
+    labels['model/20171214_160447'] = 'distance reward only'
+    labels['model/20171212_182429'] = 'distance reward + death penalty + stuck penalty'
+    labels['model/20171213_021909'] = 'distance reward + death penalty + stuck penalty + ckpt reward'
 
     plot(options, labels, 'reward_comp', xlim=None)
     return options
@@ -44,12 +53,14 @@ def plot_lr_comp(options):
     labels['model/20171212_182700'] = 'lr=1e-3'
     labels['model/20171212_182911'] = 'lr=1e-2'
 
-    plot(options, labels, 'lr_comp', xlim=[0, 2500])
+    plot(options, labels, 'lr_comp')
 
     return options
 
 def plot_arch_comp(options):
     labels = {}
+    # labels['saved_model/manual'] = 'manual nn'
+    labels['model/20171213_164419'] = 'manual nn'
     labels['saved_model/CNN_action'] = '1 [7x7-s3] cnn'
     labels['model/20171212_182429'] = '2 [3x3-s1] cnn'
 
@@ -142,6 +153,29 @@ def set_paths(options):
       #--maxGameIter=3000 \
       #--load --model_dir $MODEL/
 
+    # tucson
+    paths.append('model/20171214_160447')
+    #./xvfb-run-safe -s "-screen 0 1400x900x24" python run.py --player=cnn --train \
+      #--conv_model=1 \
+      #--dist_reward_only \
+      #--maxGameIter=3000 \
+      #--load --model_dir $MODEL/
+
+    # tucson
+    paths.append('model/20171213_164419')
+    #./xvfb-run-safe -s "-screen 0 1400x900x24" python run.py --player=manual --train \
+      #--maxGameIter=3000 \
+      #--load --model_dir $MODEL/
+    
+    # tucson
+    paths.append('model/20171213_165416')
+    #./xvfb-run-safe -s "-screen 0 1400x900x24" python run.py --player=manual --train \
+      #--fix_exprate \
+      #--explorationProb=0.3 \
+      #--maxGameIter=3000 \
+      #--load --model_dir $MODEL/
+
+    paths.append('saved_model/manual')
     options.paths = paths
     return options
 
@@ -157,11 +191,13 @@ def main():
 
     options = set_paths(options)
     options = load_scores(options)
+
     options = plot_all(options)
     options = plot_arch_comp(options)
     options = plot_lr_comp(options)
     options = plot_batch_comp(options)
     options = plot_reward_comp(options)
+    options = plot_exprate_comp(options)
 
 if __name__ == "__main__":
     main()
