@@ -109,4 +109,14 @@ MODEL=model/20171213_165416
 #python tools/plot_scores.py --score_log_path $MODEL/score_log 
 git add -f $MODEL/score_log
 
+#tucson
+MODEL=model/20171214_161615
+#./xvfb-run-safe -s "-screen 0 1400x900x24" python run.py --player=cnn --train \
+  #--conv_model=1 \
+  #--explorationProb=0.3 \
+  #--maxGameIter=3000 \
+  #--load --model_dir $MODEL/
+#python tools/plot_scores.py --score_log_path $MODEL/score_log 
+git add -f $MODEL/score_log
+
 set +o xtrace
