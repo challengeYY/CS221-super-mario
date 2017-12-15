@@ -90,7 +90,7 @@ class QLearnAgent(Agent):
                 self.actionCounter -= 1
                 return self.action
 
-        # if not enough frame for a window, keep playing 
+        # if not enough frame for a window, keep playing
         if len(self.framecache) < self.windowsize:
             return self.action
 
@@ -105,7 +105,7 @@ class QLearnAgent(Agent):
         if is_finished:
             self.action = Action.empty()
         else:
-            # get and cache new action 
+            # get and cache new action
             (actionOption, self.actionCounter), action_idx = self.algo.getAction(state)
             self.action = Action.act(actionOption)
             self.algo.actioncache[-1].append(action_idx)
@@ -123,8 +123,9 @@ class QLearnAgent(Agent):
                 if self.bestScore < distance:
                     self.bestScore = distance
                     print "Best Score: {}".format(self.bestScore)
-                with open(self.score_log_file,'a+') as score_log :
-                    score_log.write("{}\n".format(distance))
+                if self.options.isTrain:
+                    with open(self.score_log_file,'a+') as score_log :
+                        score_log.write("{}\n".format(distance))
                 print "Score: {}".format(distance)
             self.gameIter += 1
             self.env.reset()

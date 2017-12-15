@@ -4,11 +4,55 @@ from ppaquette_gym_super_mario.wrappers.control import *
 import argparse
 from bot import *
 
+def load_options(options):
+    print('Loading options ...')
+    new_options = options
+    option_path = options.model_dir + '/options.pickle'
+    if not os.path.isfile(option_path):
+        print('No parameters stored in {}'.format(option_path))
+        exit(-1)
+    options = pickle.load(open(option_path, 'rb'))
+    options.isTrain = new_options.isTrain
+    options.model_dir = new_options.model_dir
+    options.ckpt = new_options.ckpt
+    options.maxGameIter = new_options.maxGameIter
+    options.batchSize = new_options.batchSize
+    options.batchPerFeedback = new_options.batchPerFeedback
+    options.updateInterval = new_options.updateInterval
+    options.updateTargetInterval = new_options.updateTargetInterval
+    options.save_period = new_options.save_period
+
+    if not hasattr(options, 'conv_model'):
+        options.conv_model = 0
+
+    if not hasattr(options, 'partial_reward'):
+        options.partial_reward = False
+
+    if not hasattr(options, 'fix_exprate'):
+        options.fix_exprate = False
+
+    if not hasattr(options, 'dist_reward_only'):
+        options.dist_reward_only = False
+
+    if options.ckpt < 0:
+        for d in [x for x in os.listdir(options.model_dir)]:
+            if 'ckpt' in d:
+                ckpt = int(d.split('ckpt')[1])
+                if options.ckpt < ckpt:
+                    options.ckpt = ckpt
+        if options.ckpt < 0:
+            print('No ckpt in {}!'.format(options.model_dir))
+            exit(-1)
+        else:
+            print('Loading latest ckpt{}...'.format(options.ckpt))
+
+    return options
+
 def main():
     usage = "Usage: run [options]"
     parser = argparse.ArgumentParser()
 
-    # Game options 
+    # Game options
     parser.add_argument('--model_dir', dest='model_dir', action='store', default='./model',
             help='Directory to store weights')
     parser.add_argument('--player', dest='player', action='store', default='human',
@@ -72,18 +116,7 @@ def main():
     if options.isTrain and not options.restore:
         options.model_dir = "model/{:%Y%m%d_%H%M%S}".format(datetime.now())
     else: # testing. loading options
-        option_path = options.model_dir + '/options.pickle'
-        if not os.path.isfile(option_path):
-            print('No parameters stored in {}'.format(option_path))
-            exit(-1)
-        load_options = pickle.load(open(option_path, 'rb'))
-        load_options.isTrain = options.isTrain
-        load_options.restore = options.restore
-        options = load_options
-        print('Loading options ...')
-        optionDict = vars(options)
-        for k in optionDict:
-            print(k + ' = ' + str(optionDict[k]))
+        options = load_options(options)
 
     if options.player == 'human':
         agent = HumanAgent(options)
