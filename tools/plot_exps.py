@@ -4,7 +4,7 @@ import numpy as np
 from os import path
 from plot_scores import *
 
-def plot(options, labels, name, xlim=None):
+def plot(options, labels, name, xlim=None, legendloc=None):
     fig, ax = plt.subplots()
 
     for path in labels:
@@ -16,14 +16,19 @@ def plot(options, labels, name, xlim=None):
 
     if xlim is not None:
         ax.set_xlim(xlim)
-    legend = ax.legend(loc='upper left', shadow=True)
+
+    if legendloc is None:
+        legendloc = 'upper left'
+    legend = ax.legend(loc=legendloc, shadow=True)
     fig.savefig('figs/' + name + ".png")
     plt.show()
 
 def plot_exprate_comp(options):
     labels = {}
-    labels['model/20171213_164419'] = 'Adaptive Exploration Rate'
-    labels['model/20171213_165416'] = 'Fixed Exploration Rate = 0.3'
+    labels['model/20171213_164419'] = 'manual-adaptive'
+    labels['model/20171213_165416'] = 'manual-fixed (0.3)'
+    labels['model/20171212_182429'] = 'cnn-adaptive'
+    labels['model/20171214_161615'] = 'cnn-fixed (0.3)'
 
     plot(options, labels, 'exprate_comp', xlim=None)
     return options
@@ -39,9 +44,9 @@ def plot_reward_comp(options):
 
 def plot_batch_comp(options):
     labels = {}
-    labels['model/20171212_182429'] = 'batch=20, #Batch=11, updateInterval=10'
-    labels['model/20171210_154650'] = 'batch=64, #Batch=16, updateInterval=64'
-    labels['model/20171212_210533'] = 'batch=128, #Batch=16, updateInterval=256'
+    labels['model/20171212_182429'] = 'batch=20 #Batch=11 updateInterval=10'
+    labels['model/20171212_181553'] = 'batch=64 #Batch=16 updateInterval=64'
+    labels['model/20171212_210533'] = 'batch=128 #Batch=16 updateInterval=256'
 
     plot(options, labels, 'batch_comp', xlim=None)
 
@@ -61,10 +66,11 @@ def plot_arch_comp(options):
     labels = {}
     # labels['saved_model/manual'] = 'manual nn'
     labels['model/20171213_164419'] = 'manual nn'
-    labels['saved_model/CNN_action'] = '1 [7x7-s3] cnn'
-    labels['model/20171212_182429'] = '2 [3x3-s1] cnn'
+    labels['saved_model/CNN_action'] = '[7x7-s3] cnn'
+    labels['saved_model/best_model'] = '[5x5-s2] + [3x3-s1] cnn'
+    labels['model/20171212_182429'] = '2 x [3x3-s1] cnn'
 
-    plot(options, labels, 'arch_comp')
+    plot(options, labels, 'arch_comp', xlim=[0, 7000], legendloc='upper right')
 
     return options
 
@@ -105,7 +111,7 @@ def set_paths(options):
       #--maxGameIter=3000 \
       #--load --model_dir $MODEL/
     
-    paths.append('model/20171210_154650')
+    paths.append('model/20171212_181553')
     #./xvfb-run-safe -s "-screen 0 1400x900x24" python run.py --player=cnn --train \
       #--conv_model=1 \
       #--maxGameIter=3000 \
@@ -175,7 +181,16 @@ def set_paths(options):
       #--maxGameIter=3000 \
       #--load --model_dir $MODEL/
 
+    # tucson
+    paths.append('model/20171214_161615')
+    #./xvfb-run-safe -s "-screen 0 1400x900x24" python run.py --player=cnn --train \
+      #--conv_model=1 \
+      #--explorationProb=0.3 \
+      #--maxGameIter=3000 \
+      #--load --model_dir $MODEL/
+
     paths.append('saved_model/manual')
+    paths.append('saved_model/best_model')
     options.paths = paths
     return options
 
