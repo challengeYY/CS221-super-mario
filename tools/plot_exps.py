@@ -12,7 +12,7 @@ def plot(options, labels, name, xlim=None, legendloc=None):
                 label=labels[path])
         ax.set(xlabel='Game Number', ylabel='Distance',
                title='Average distance Mario reaches during training')
-        ax.grid()
+    ax.grid()
 
     if xlim is not None:
         ax.set_xlim(xlim)
